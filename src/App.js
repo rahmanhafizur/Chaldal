@@ -1,8 +1,9 @@
 import { ShoppingCart } from 'lucide-react';
+import logo from './assets/Logo.png'
 
 function App() {
   return (
-<<<<<<< Updated upstream
+  <>
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
@@ -18,7 +19,8 @@ function App() {
           Learn React
         </a>
       </header>
-=======
+    </div>
+
     // Ensure 'font-sans' is correctly configured in your Tailwind setup (e.g., to Inter)
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Navbar */}
@@ -137,8 +139,9 @@ function App() {
           </div>
         </div>
       </footer>
->>>>>>> Stashed changes
     </div>
+  </>
+    
   );
 }
 
