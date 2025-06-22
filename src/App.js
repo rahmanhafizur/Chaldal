@@ -6,7 +6,7 @@ function App() {
   <>
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        {/* <img src={logo} className="App-logo" alt="logo" /> */}
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
@@ -16,7 +16,6 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
         </a>
       </header>
     </div>
@@ -43,7 +42,7 @@ function App() {
                 cursor-pointer
                 select-none
             ">
-              C
+              <img src={logo} alt="Chaldal Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full ..." />
             </div>
             <span className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight select-none">
               Chaldal
