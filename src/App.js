@@ -37,6 +37,32 @@ const product30Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+
 
 
 function App() {
+  // state for managing the sign in page
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [user, setUser] = useState('');
+  const [userBool, setUserBool] = useState(false);
+
+  const handleSignInClick = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleLogin = (username, password) => {
+    if (username === 'Fahim' && password === '1234') {
+      setUser(username);
+      setUserBool(true);
+      setShowLoginModal(false);
+    } else {
+      alert('Invalid credentials');
+    }
+    console.log('Logging in:', username);
+    console.log('status: ', userBool);
+  };
+
+
+
+
+
+
   // State for managing the categories menu visibility
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null); // New state for selected category
@@ -406,6 +432,99 @@ function App() {
   });
 
   return (
+    <>
+    <header>
+        {userBool ? (
+          <>
+            <div className="avatar">{user[0]}</div>
+            <button onClick={() => {
+              setUser('');
+              setUserBool(false);         // ✅ Properly clear boolean too
+            }}>
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <button onClick={() => setShowLoginModal(true)}>
+            Sign In
+          </button>
+        )}
+      </header>
+
+
+    {/* show login page */}
+    {showLoginModal && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <div className="modal-box" style={{
+            background: 'white',
+            padding: 20,
+            borderRadius: 8,
+            minWidth: 300,
+            position: 'relative',
+          }}>
+            <button onClick={() => setShowLoginModal(false)}
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                background: 'transparent',
+                border: 'none',
+                fontSize: 18,
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <form onSubmit={e => {
+              e.preventDefault();
+              const uname = e.target.username.value;
+              const pwd = e.target.password.value;
+              {handleLogin(uname, pwd)} {/* this is calling the handleLogin function to check the validity of the credential */}
+            }}>
+              <h2>Sign In</h2>
+              <div style={{ marginBottom: 12 }}>
+                <input
+                  name="username"
+                  type="text"
+                  placeholder="Username"
+                  required
+                  style={{ width: '100%', padding: 8, marginBottom: 8 }}
+                />
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  required
+                  style={{ width: '100%', padding: 8 }}
+                />
+              </div>
+              <button type="submit" style={{
+                width: '100%',
+                padding: 10,
+                background: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer'
+              }}>
+                Sign In
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    )}
+
+
+
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Navbar */}
       <nav className="fixed top-0 w-full bg-white shadow-md z-50">
@@ -509,7 +628,7 @@ function App() {
             </div>
 
             {/* Auth Buttons - Hidden on small screens */}
-            <button className="px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition select-none hidden md:block">
+            <button onClick={handleSignInClick} className="px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition select-none hidden md:block">
               Sign In
             </button>
             <button className="px-4 py-2 sm:px-6 sm:py-2 border border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-100 transition select-none hidden md:block">
@@ -811,6 +930,12 @@ function App() {
         <MessageCircle className="w-7 h-7" />
       </button>
     </div>
+
+
+    
+
+
+    </>
   );
 }
 
