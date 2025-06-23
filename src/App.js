@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
+import logo from './assets/Logo.png';
 
-// Placeholder URLs for images
-const logo = 'https://placehold.co/100x100/ADD8E6/000000?text=Logo';
 
 // Placeholder URLs for your 30 product images
-const product1Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+1';
-const product2Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+2';
-const product3Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+3';
-const product4Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+4';
-const product5Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+5';
-const product6Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+6';
-const product7Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+7';
-const product8Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+8';
-const product9Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+9';
-const product10Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+10';
-const product11Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+11';
-const product12Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+12';
-const product13Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+13';
-const product14Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+14';
+const product1Image = 'https://www.sroddhaa.com/wp-content/uploads/2021/11/fresh-wet-apple-fruits-isolated-white-background-isolated-wet-apples-green-yellow-red-apple-fruits-isolated-white-background-135283017.jpg';
+const product2Image = 'https://m2ce.sindabad.com/pub/media/catalog/product//b/r/brand-thumb-arla-organic.jpg';
+const product3Image = 'https://sallysbakingaddiction.com/wp-content/uploads/2024/01/homemade-whole-wheat-bread.jpg';
+const product4Image = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpeOjLqKjkte9zcRz6OeJCE0AY1XfoBIOtsw&s';
+const product5Image = 'https://images.deliveryhero.io/image/darkstores/nv-global-catalog/bd/6dccbf2e-52be-4e6b-b0ac-8a16aac2f2e6.jpg?height=480';
+const product6Image = 'https://lavendersuperstore.com.bd/public/uploads/all/K0SQgrXULQYxHE0fh09usbG9F5iTs4XqQJjqNata.jpg';
+const product7Image = 'https://www.laolivapure.com/wp-content/uploads/2020/09/EV500-ML-scaled.jpg';
+const product8Image = 'https://media.npr.org/assets/img/2014/12/15/cage-free-eggs_wide-8e38fc084bad543516994958a4373918dbbf96c8.jpg?s=1400&c=100&f=jpeg';
+const product9Image = 'https://shop.tavora.ca/cdn/shop/products/SPINACHBUNCH.jpg?v=1632949222';
+const product10Image = 'https://northoakqualitymeat.com/wp-content/uploads/2023/01/chicken-breast-fillets-1.jpg';
+const product11Image = 'https://d2j6dbq0eux0bg.cloudfront.net/images/30033072/3819249768.jpg';
+const product12Image = 'https://catalog.sixty60.co.za/v2/files/63d2141df0cbac537c077e99?width=1440&height=1440';
+const product13Image = 'https://froneri.ph/wp-content/uploads/2020/10/Greek-BBCC_110g.png';
+const product14Image = 'https://d2t8nl1y0ie1km.cloudfront.net/images/thumbs/65fa9704115075f231eccfc4_Quaker-Oats-500gm-Jar_1.webp';
 const product15Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+15';
 const product16Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+16';
 const product17Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+17';
@@ -401,7 +400,7 @@ function App() {
   // Filtered products based on search term and selected category
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory ? product.category === selectedCategory : true;
     return matchesSearch && matchesCategory;
   });
@@ -454,10 +453,10 @@ function App() {
                 cursor-pointer
                 select-none
               ">
-              <img src={logo} alt="Chaldal Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full" />
+              <img src={logo} alt="UrbanCart Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full" />
             </div>
             <span className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight select-none">
-              Chaldal
+              UrbanCart
             </span>
           </div>
 
@@ -529,23 +528,23 @@ function App() {
         </div>
         {/* Mobile Search Bar - shown below main nav on small screens */}
         <div className="md:hidden px-4 pb-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          </div>
         </div>
       </nav>
 
       {/* Main Content Area */}
       <main className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 select-none leading-tight">
-          Welcome to Chaldal
+          Welcome to UrbanCart
         </h1>
         <p className="mt-4 text-base sm:text-lg text-gray-600 select-none">
           Your one-stop destination for all things amazing.
@@ -561,9 +560,8 @@ function App() {
           {slides.map((slide, index) => (
             <div
               key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
             >
               <img src={slide.imageUrl} alt={slide.title} className="w-full h-full object-cover rounded-xl" />
               <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-center items-center text-white p-4 rounded-xl">
@@ -598,9 +596,8 @@ function App() {
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentSlide ? 'bg-white' : 'bg-gray-400 bg-opacity-75'
-                }`}
+                className={`w-3 h-3 rounded-full transition-colors ${index === currentSlide ? 'bg-white' : 'bg-gray-400 bg-opacity-75'
+                  }`}
                 aria-label={`Go to slide ${index + 1}`}
               ></button>
             ))}
@@ -631,7 +628,7 @@ function App() {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h3>
               <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
               <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
-                <span className="text-blue-600 font-bold text-lg">${product.price.toFixed(2)}</span>
+                <span className="text-blue-600 font-bold text-lg"> ৳{product.price.toFixed(2)}</span>
                 <button
                   onClick={() => addToCart(product)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
@@ -668,7 +665,7 @@ function App() {
                         <img src={item.imageUrl} alt={item.name} className="w-16 h-16 object-cover rounded-md" />
                         <div>
                           <p className="font-semibold text-gray-800">{item.name}</p>
-                          <p className="text-gray-600 text-sm">${item.price.toFixed(2)}</p>
+                          <p className="text-gray-600 text-sm"> ৳{item.price.toFixed(2)}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -698,7 +695,7 @@ function App() {
                 </div>
                 <div className="mt-6 flex justify-between items-center border-t pt-4">
                   <p className="text-xl font-bold text-gray-900">Total:</p>
-                  <p className="text-xl font-bold text-blue-600">${getCartTotal()}</p>
+                  <p className="text-xl font-bold text-blue-600"> ৳{getCartTotal()}</p>
                 </div>
                 <button className="mt-6 w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition">
                   Proceed to Checkout
@@ -798,7 +795,7 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
           </button>
-          <p className="mb-4 md:mb-0 text-gray-400">Copyright © {new Date().getFullYear()} Chaldal Platform Limited | All Rights Reserved</p>
+          <p className="mb-4 md:mb-0 text-gray-400">Copyright © {new Date().getFullYear()} UrbanCart Platform Limited | All Rights Reserved</p>
           <button className="px-6 py-2 rounded-full bg-gray-600 text-white font-semibold shadow-lg cursor-not-allowed">
             We are offline now
           </button>
