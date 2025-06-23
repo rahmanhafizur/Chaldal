@@ -18,8 +18,8 @@ const product11Image = 'https://d2j6dbq0eux0bg.cloudfront.net/images/30033072/38
 const product12Image = 'https://catalog.sixty60.co.za/v2/files/63d2141df0cbac537c077e99?width=1440&height=1440';
 const product13Image = 'https://froneri.ph/wp-content/uploads/2020/10/Greek-BBCC_110g.png';
 const product14Image = 'https://d2t8nl1y0ie1km.cloudfront.net/images/thumbs/65fa9704115075f231eccfc4_Quaker-Oats-500gm-Jar_1.webp';
-const product15Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+15';
-const product16Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+16';
+const product15Image = 'https://aquamarket.ua/37901-large_default/alesto-almond-california-200-g.jpg';
+const product16Image = 'https://mccain.com.au/media/fgenh5et/jmi2000193-broccolli-500g-fop-v2.png?width=500&format=webp';
 const product17Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+17';
 const product18Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+18';
 const product19Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+19';
