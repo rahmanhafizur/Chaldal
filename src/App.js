@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
 import logo from './assets/Logo.png';
+import { FiLogOut } from "react-icons/fi"; // logout icon
 
 
 // Placeholder URLs for your 30 product images
@@ -58,6 +59,70 @@ function App() {
     console.log('status: ', userBool);
   };
 
+
+
+
+
+  const headerStyle = {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    padding: "10px 20px",
+    gap: "10px",
+  };
+
+  const signedOut = {
+    display: "flex",
+    gap: "10px",
+  };
+
+  const baseBtnStyle = {
+    padding: "10px 20px",             // more rectangular shape :contentReference[oaicite:1]{index=1}
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "bold",
+    transition: "background-color 0.3s",
+  };
+
+  const loginBtnStyle = {
+    ...baseBtnStyle,
+    backgroundColor: "#007bff",
+    color: "#fff",
+  };
+
+  const signupBtnStyle = {
+    ...baseBtnStyle,
+    backgroundColor: "#fff",
+    color: "#007bff",
+    border: "2px solid #007bff",
+  };
+
+  const signedIn = {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  };
+
+  const avatarStyle = {
+    width: "40px",
+    height: "40px",
+    borderRadius: "4px", // slightly rounded rectangle
+    backgroundColor: "#6c63ff",
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+
+  const logoutBtnStyle = {
+    ...baseBtnStyle,
+    backgroundColor: "#007bff",
+    color: "#fff",
+  };
 
 
 
@@ -433,23 +498,7 @@ function App() {
 
   return (
     <>
-    <header>
-        {userBool ? (
-          <>
-            <div className="avatar">{user[0]}</div>
-            <button onClick={() => {
-              setUser('');
-              setUserBool(false);         // ✅ Properly clear boolean too
-            }}>
-              Sign Out
-            </button>
-          </>
-        ) : (
-          <button onClick={() => setShowLoginModal(true)}>
-            Sign In
-          </button>
-        )}
-      </header>
+    
 
 
     {/* show login page */}
@@ -627,13 +676,29 @@ function App() {
               )}
             </div>
 
-            {/* Auth Buttons - Hidden on small screens */}
-            <button onClick={handleSignInClick} className="px-4 py-2 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition select-none hidden md:block">
-              Sign In
-            </button>
-            <button className="px-4 py-2 sm:px-6 sm:py-2 border border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-100 transition select-none hidden md:block">
-              Sign Up
-            </button>
+            {/* this is for handling sign in, sign up, logout, logo of users */}
+            <header style={headerStyle}>
+              {userBool ? (
+                <div style={signedIn}>
+                  <div style={avatarStyle}>{user[0].toUpperCase()}</div>
+                  <button style={logoutBtnStyle} onClick={() => {
+                    setUser("");
+                    setUserBool(false);
+                  }}>
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div style={signedOut}>
+                  <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
+                    Sign In
+                  </button>
+                  <button style={signupBtnStyle}>
+                    Sign Up
+                  </button>
+                </div>
+              )}
+            </header>
 
             {/* Mobile Hamburger for other nav links on small screens */}
             <div className="md:hidden">
