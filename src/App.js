@@ -61,8 +61,6 @@ function App() {
 
 
 
-
-
   const headerStyle = {
     display: "flex",
     justifyContent: "flex-end",
@@ -87,15 +85,30 @@ function App() {
   };
 
   const loginBtnStyle = {
-    ...baseBtnStyle,
+    width: "100px",
+    height: "40px",
+    borderRadius: "4px", // slightly rounded rectangle
+    fontWeight: "bold",
+    fontSize: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#007bff",
     color: "#fff",
+    border: "2px solid #007bff",
   };
 
   const signupBtnStyle = {
-    ...baseBtnStyle,
-    backgroundColor: "#fff",
-    color: "#007bff",
+    width: "100px",
+    height: "40px",
+    borderRadius: "4px", // slightly rounded rectangle
+    fontWeight: "bold",
+    fontSize: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#007bff",
+    color: "#fff",
     border: "2px solid #007bff",
   };
 
@@ -119,9 +132,17 @@ function App() {
   };
 
   const logoutBtnStyle = {
-    ...baseBtnStyle,
+    width: "100px",
+    height: "40px",
+    borderRadius: "4px", // slightly rounded rectangle
+    fontWeight: "bold",
+    fontSize: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#007bff",
     color: "#fff",
+    border: "2px solid #007bff",
   };
 
 
