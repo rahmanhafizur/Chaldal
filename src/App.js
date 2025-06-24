@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; // Fixed the syntax error here
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
 // Corrected image paths to use direct URLs or accessible paths
-const logo = 'https://placehold.co/48x48/007bff/ffffff?text=LOGO'; // Placeholder URL for Logo.png
+const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
 const basket_of_organic_foods = 'https://raw.githubusercontent.com/google/generative-ai-docs/main/site/docs/samples/img/image_694e86.jpg'; // Using the provided contentFetchId URL
 
 // Placeholder URLs for your 30 product images
