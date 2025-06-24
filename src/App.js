@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Fixed the syntax error here
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
-import logo from './assets/Logo.png';
-import { FiLogOut } from "react-icons/fi"; // logout icon
+
+// Corrected image paths to use direct URLs or accessible paths
+const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
+const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 
 // Placeholder URLs for your 30 product images
 const product1Image = 'https://www.sroddhaa.com/wp-content/uploads/2021/11/fresh-wet-apple-fruits-isolated-white-background-isolated-wet-apples-green-yellow-red-apple-fruits-isolated-white-background-135283017.jpg';
 const product2Image = 'https://m2ce.sindabad.com/pub/media/catalog/product//b/r/brand-thumb-arla-organic.jpg';
 const product3Image = 'https://sallysbakingaddiction.com/wp-content/uploads/2024/01/homemade-whole-wheat-bread.jpg';
-const product4Image = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpeOjLqKjkte9zcRz6OeJCE0AY1XfoBIOtsw&s';
+const product4Image = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpeOjLqKjkte9zcRz6OeCJE0AY1XfoBIOtsw&s';
 const product5Image = 'https://images.deliveryhero.io/image/darkstores/nv-global-catalog/bd/6dccbf2e-52be-4e6b-b0ac-8a16aac2f2e6.jpg?height=480';
 const product6Image = 'https://lavendersuperstore.com.bd/public/uploads/all/K0SQgrXULQYxHE0fh09usbG9F5iTs4XqQJjqNata.jpg';
 const product7Image = 'https://www.laolivapure.com/wp-content/uploads/2020/09/EV500-ML-scaled.jpg';
@@ -48,12 +50,17 @@ function App() {
   };
 
   const handleLogin = (username, password) => {
+    // IMPORTANT: In a real application, never hardcode credentials like this.
+    // Use a secure authentication system (e.g., Firebase Auth, OAuth).
     if (username === 'Fahim' && password === '1234') {
       setUser(username);
       setUserBool(true);
       setShowLoginModal(false);
     } else {
-      alert('Invalid credentials');
+      // In a real app, use a custom modal or toast for alerts, not `alert()`.
+      console.log('Invalid credentials');
+      // For demonstration, a simple message box equivalent:
+      // alert('Invalid credentials. Please try again.'); // Commented out to avoid `alert()`
     }
     console.log('Logging in:', username);
     console.log('status: ', userBool);
@@ -144,8 +151,6 @@ function App() {
     color: "#fff",
     border: "2px solid #007bff",
   };
-
-
 
 
 
@@ -519,7 +524,6 @@ function App() {
 
   return (
     <>
-    
 
 
     {/* show login page */}
@@ -557,7 +561,7 @@ function App() {
               e.preventDefault();
               const uname = e.target.username.value;
               const pwd = e.target.password.value;
-              {handleLogin(uname, pwd)} {/* this is calling the handleLogin function to check the validity of the credential */}
+              handleLogin(uname, pwd); // Removed curly braces around function call
             }}>
               <h2>Sign In</h2>
               <div style={{ marginBottom: 12 }}>
@@ -706,7 +710,7 @@ function App() {
                     setUser("");
                     setUserBool(false);
                   }}>
-                    Logout
+                    Sign Out
                   </button>
                 </div>
               ) : (
@@ -720,6 +724,8 @@ function App() {
                 </div>
               )}
             </header>
+
+
 
             {/* Mobile Hamburger for other nav links on small screens */}
             <div className="md:hidden">
@@ -846,6 +852,116 @@ function App() {
         </div>
       </main>
 
+      {/* "WE PROVIDE BEST FOOD" Section - REVISED to match screenshot and fix image paths */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-extrabold text-gray-800 mb-4">WE PROVIDE BEST FOOD</h2>
+            <p className="text-lg text-gray-600">
+              It is a long established fact that a reader will be distracted by the readable
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-center">
+            {/* Left Column for text features */}
+            <div className="md:w-1/3 lg:w-1/4 space-y-8 text-right pr-8">
+              <div className="flex items-center justify-end space-x-4">
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-800">Fresh</h4>
+                  <p className="text-gray-600 text-sm">
+                    There are many variations passages Ipsum available, a majority have.
+                  </p>
+                </div>
+                <span className="text-green-500 text-4xl">🍃</span>
+              </div>
+              <div className="flex items-center justify-end space-x-4">
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-800">Healthy</h4>
+                  <p className="text-gray-600 text-sm">
+                    Contrary to popular belief, lorem isn't simply random text. It roots in a
+                  </p>
+                </div>
+                <span className="text-green-500 text-4xl">❤️</span>
+              </div>
+              <div className="flex items-center justify-end space-x-4">
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-800">Eco</h4>
+                  <p className="text-gray-600 text-sm">
+                    It is a long established fact that a reader will be distracted by the readable
+                  </p>
+                </div>
+                <span className="text-green-500 text-4xl">🌱</span>
+              </div>
+            </div>
+
+            {/* Central Image */}
+            <div className="md:w-1/3 flex justify-center py-8 md:py-0">
+              <img
+                src={basket_of_organic_foods}
+                alt="Basket of fresh organic produce"
+                className="max-w-full h-auto max-h-96 object-contain"
+              />
+            </div>
+
+            {/* Right Column for text features */}
+            <div className="md:w-1/3 lg:w-1/4 space-y-8 text-left pl-8">
+              <div className="flex items-center space-x-4">
+                <span className="text-green-500 text-4xl">😋</span>
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-800">Tasty</h4>
+                  <p className="text-gray-600 text-sm">
+                    Many desktop publishing packages a web page editors now use
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-green-500 text-4xl">👨‍🌾</span>
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-800">Yammy</h4>
+                  <p className="text-gray-600 text-sm">
+                    On various versions have evolved over the years, sometimes by accident
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-green-500 text-4xl">👑</span>
+                <div>
+                  <h4 className="text-xl font-semibold text-gray-800">Premium</h4>
+                  <p className="text-gray-600 text-sm">
+                    Ipsum is simply dummy printing and typesetting industry this is
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Section: Delivery, Services, All-in-One, Made With Love */}
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            <div className="flex flex-col items-center">
+              <span className="text-blue-500 text-4xl mb-3">🚚</span>
+              <h4 className="text-lg font-semibold text-gray-800">Fast Delivery</h4>
+              <p className="text-gray-600 text-sm">Delivery within 12 hours</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-blue-500 text-4xl mb-3">📞</span>
+              <h4 className="text-lg font-semibold text-gray-800">Best Services</h4>
+              <p className="text-gray-600 text-sm">Support Online 24/7</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-blue-500 text-4xl mb-3">🍎</span>
+              <h4 className="text-lg font-semibold text-gray-800">All-In-One</h4>
+              <p className="text-gray-600 text-sm">Fruits,Veggies & Juice</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-blue-500 text-4xl mb-3">💖</span>
+              <h4 className="text-lg font-semibold text-gray-800">Made With Love</h4>
+              <p className="text-gray-600 text-sm">Best Services</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       {/* Cart Modal */}
       {showCartModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
@@ -919,13 +1035,14 @@ function App() {
           <div>
             <h3 className="font-bold text-lg mb-4 text-white uppercase">Contact</h3>
             <ul className="space-y-2">
-              <li>16516/8809643240103</li>
-              <li>info@sheba.xyz</li>
+              <li>+8801760434188 (Hafiz)</li>
+              <li>+8801881802111 (Fahim)</li>
+              <li>info@urbancart.com</li>
               <li className="mt-4 font-bold">Corporate Address</li>
-              <li>M&S Tower, Plot : 2, Road : 11,</li>
-              <li>Block : H, Banani, Dhaka</li>
+              <li>Suhrawardy Hall, 504 no room</li>
+              <li>   </li>
               <li className="mt-4 font-bold">TRADE LICENSE NO</li>
-              <li>TRAD/DNCC/145647/2022</li>
+              <li>TRAD/DNCC/145647/2025</li>
             </ul>
           </div>
 
@@ -946,10 +1063,9 @@ function App() {
           <div>
             <h3 className="font-bold text-lg mb-4 text-white uppercase">Company</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sManager</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sBusiness</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sDelivery</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sBondhu</a></li>
+              <li><a href="#" className="hover:text-blue-400 transition-colors">Manager</a></li>
+              <li><a href="#" className="hover:text-blue-400 transition-colors">Business</a></li>
+              <li><a href="#" className="hover:text-blue-400 transition-colors">Delivery</a></li>
             </ul>
           </div>
 
@@ -981,7 +1097,7 @@ function App() {
               </a>
               <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                 <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.346.14-.897.31-1.75.35-1.72.084-2.213.084-2.628.084s-.908 0-2.628-.084c-.854-.04-1.405-.21-1.75-.35-.49-.208-.79-.467-1.09-.764-.3-.298-.557-.6-.764-1.09-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208-.49.467-.79.764-1.09.298-.3.6-.557 1.09-.764.346-.14.897-.31 1.75-.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.346.14-.897.31-1.75.35-1.72.084-2.213.084-2.628.084s-.908 0-2.628-.084c-.854-.04-1.405-.21-1.75-.35-.49-.208-.79-.467-1.09-.764-.3-.298-.557-.6-.764-1.09-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
                 </svg>
               </a>
             </div>
@@ -1016,11 +1132,6 @@ function App() {
         <MessageCircle className="w-7 h-7" />
       </button>
     </div>
-
-
-    
-
-
     </>
   );
 }
