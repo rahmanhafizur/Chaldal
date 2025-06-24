@@ -973,13 +973,14 @@ function App() {
           <div>
             <h3 className="font-bold text-lg mb-4 text-white uppercase">Contact</h3>
             <ul className="space-y-2">
-              <li>16516/8809643240103</li>
-              <li>info@sheba.xyz</li>
+              <li>+8801760434188 (Hafiz)</li>
+              <li>+8801881802111 (Fahim)</li>
+              <li>info@urbancart.com</li>
               <li className="mt-4 font-bold">Corporate Address</li>
-              <li>M&S Tower, Plot : 2, Road : 11,</li>
-              <li>Block : H, Banani, Dhaka</li>
+              <li>Suhrawardy Hall, 504 no room</li>
+              <li>   </li>
               <li className="mt-4 font-bold">TRADE LICENSE NO</li>
-              <li>TRAD/DNCC/145647/2022</li>
+              <li>TRAD/DNCC/145647/2025</li>
             </ul>
           </div>
 
@@ -1000,10 +1001,9 @@ function App() {
           <div>
             <h3 className="font-bold text-lg mb-4 text-white uppercase">Company</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sManager</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sBusiness</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sDelivery</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">sBondhu</a></li>
+              <li><a href="#" className="hover:text-blue-400 transition-colors">Manager</a></li>
+              <li><a href="#" className="hover:text-blue-400 transition-colors">Business</a></li>
+              <li><a href="#" className="hover:text-blue-400 transition-colors">Delivery</a></li>
             </ul>
           </div>
 
