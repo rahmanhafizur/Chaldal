@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'; // Fixed the syntax error here
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
-// Corrected image paths to use direct URLs or accessible paths
-const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
-const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
+import logo from './assets/Logo.png';
+
 
 // Placeholder URLs for your 30 product images
 const product1Image = 'https://www.sroddhaa.com/wp-content/uploads/2021/11/fresh-wet-apple-fruits-isolated-white-background-isolated-wet-apples-green-yellow-red-apple-fruits-isolated-white-background-135283017.jpg';
