@@ -10,7 +10,7 @@ const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/m
 const product1Image = 'https://www.sroddhaa.com/wp-content/uploads/2021/11/fresh-wet-apple-fruits-isolated-white-background-isolated-wet-apples-green-yellow-red-apple-fruits-isolated-white-background-135283017.jpg';
 const product2Image = 'https://m2ce.sindabad.com/pub/media/catalog/product//b/r/brand-thumb-arla-organic.jpg';
 const product3Image = 'https://sallysbakingaddiction.com/wp-content/uploads/2024/01/homemade-whole-wheat-bread.jpg';
-const product4Image = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTpeOjLqKjkte9zcRz6OeCJE0AY1XfoBIOtsw&s';
+const product4Image = 'https://images.deliveryhero.io/image/nv/Philippines/SukiGrocer-MNL-West-Rembo/105884-2.jpg?height=176';
 const product5Image = 'https://images.deliveryhero.io/image/darkstores/nv-global-catalog/bd/6dccbf2e-52be-4e6b-b0ac-8a16aac2f2e6.jpg?height=480';
 const product6Image = 'https://lavendersuperstore.com.bd/public/uploads/all/K0SQgrXULQYxHE0fh09usbG9F5iTs4XqQJjqNata.jpg';
 const product7Image = 'https://www.laolivapure.com/wp-content/uploads/2020/09/EV500-ML-scaled.jpg';
@@ -23,20 +23,20 @@ const product13Image = 'https://froneri.ph/wp-content/uploads/2020/10/Greek-BBCC
 const product14Image = 'https://d2t8nl1y0ie1km.cloudfront.net/images/thumbs/65fa9704115075f231eccfc4_Quaker-Oats-500gm-Jar_1.webp';
 const product15Image = 'https://aquamarket.ua/37901-large_default/alesto-almond-california-200-g.jpg';
 const product16Image = 'https://mccain.com.au/media/fgenh5et/jmi2000193-broccolli-500g-fop-v2.png?width=500&format=webp';
-const product17Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+17';
-const product18Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+18';
-const product19Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+19';
-const product20Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+20';
-const product21Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+21';
-const product22Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+22';
-const product23Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+23';
-const product24Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+24';
-const product25Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+25';
-const product26Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+26';
-const product27Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+27';
-const product28Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+28';
-const product29Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+29';
-const product30Image = 'https://placehold.co/200x150/e0f2fe/0369a1?text=Product+30';
+const product17Image = 'https://www.aishcart.in/3285-thickbox_default/oranges-imported-1kg.jpg';
+const product18Image = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVnI8uwUzcN7MbThPCJq5sP2LGhYybsmWT7g&s';
+const product19Image = 'https://i.chaldn.com/_mpimage/mojo-soft-drink-2-ltr?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D130804&q=best&v=1';
+const product20Image = 'https://images.deliveryhero.io/image/darkstores/nv-global-catalog/bd/9fd040ae-a4ff-4495-b2a5-f4f578a16ae3.jpg?height=480';
+const product21Image = 'https://neelamfoodlandmumbai.com/cdn/shop/files/IMG_3573_800x.jpg?v=1726894224';
+const product22Image = 'https://images.deliveryhero.io/image/fd-HK/NV/products/59c962918dfd8046c72aaa10d7256db8bb708a8d.jpg?height=480';
+const product23Image = 'https://www.kmarket.com.bd/wp-content/uploads/2021/06/DONGWON-DOUBLE-HOT-PEPPER-TUNA-150G.jpg';
+const product24Image = 'https://lavendersuperstore.com.bd/public/uploads/all/Mc3koYlh1FUNqd8CqILNI6ABYhgMXh4w6cOiXXHL.jpg';
+const product25Image = 'https://lavendersuperstore.com.bd/public/uploads/all/khEZ6nkWOZV31cYRy5Yuv5psi4UkMBnJVhcvjFQm.webp';
+const product26Image = 'https://img.drz.lazcdn.com/static/bd/p/2b8778260e5986d7d3268b092f8f7bae.png_960x960q80.png_.webp';
+const product27Image = 'https://paikaree.com.bd/public/uploads/products/photos/colgate-maximum-cavity-protection-fluoride-&-calcium-toothpaste---100ml-paikaree.webp';
+const product28Image = 'https://i.chaldn.com/_mpimage/clear-shampoo-men-cool-sport-menthol-anti-dandruff-330-ml?src=https%3A%2F%2Feggyolk.chaldal.com%2Fapi%2FPicture%2FRaw%3FpictureId%3D128248&q=best&v=1';
+const product29Image = 'https://metro-b2c.s3.ap-southeast-1.amazonaws.com/products_images_new/12626620-0-M.jpg';
+const product30Image = 'https://badami.com.bd/public/uploads/all/nAI2EIxSfmoiTujSK1hA8sJ5SeWlvDNC4wvuhWq3.webp';
 
 
 function App() {
@@ -1039,7 +1039,7 @@ function App() {
               <li>+8801881802111 (Fahim)</li>
               <li>info@urbancart.com</li>
               <li className="mt-4 font-bold">Corporate Address</li>
-              <li>Suhrawardy Hall, 504 no room</li>
+              <li>Suhrawardy Hall, 507 no room</li>
               <li>   </li>
               <li className="mt-4 font-bold">TRADE LICENSE NO</li>
               <li>TRAD/DNCC/145647/2025</li>
