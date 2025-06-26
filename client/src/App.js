@@ -4,7 +4,7 @@ import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, Chevron
 
 // Corrected image paths to use direct URLs or accessible paths
 const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
-const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
+const basket_of_organic_foods = 'https://static.vecteezy.com/system/resources/previews/047/830/714/non_2x/a-vibrant-assortment-of-fresh-vegetables-including-peppers-onions-lettuce-broccoli-tomatoes-corn-and-garlic-arranged-on-a-white-background-png.png'; // Using the provided contentFetchId URL
 
 
 // Placeholder URLs for your 30 product images - REMOVED, as images are now fetched from DB
