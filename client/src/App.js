@@ -2,16 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
 
-// Corrected image paths to use direct URLs or accessible paths
-const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
-const basket_of_organic_foods = 'https://static.vecteezy.com/system/resources/previews/047/830/714/non_2x/a-vibrant-assortment-of-fresh-vegetables-including-peppers-onions-lettuce-broccoli-tomatoes-corn-and-garlic-arranged-on-a-white-background-png.png'; // Using the provided contentFetchId URL
-
-
-// Placeholder URLs for your 30 product images - REMOVED, as images are now fetched from DB
-// const product1Image = 'https://www.sroddhaa.com/wp-content/uploads/2021/11/fresh-wet-apple-fruits-isolated-white-background-isolated-wet-apples-green-yellow-red-apple-fruits-isolated-white-background-135283017.jpg';
-// const product2Image = 'https://m2ce.sindabad.com/pub/media/catalog/product//b/r/brand-thumb-arla-organic.jpg';
-// ... (all other productXImage constants removed) ...
-
+const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
+const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
   // state for managing the sign in page
@@ -24,8 +16,6 @@ function App() {
   };
 
   const handleLogin = (username, password) => {
-    // IMPORTANT: In a real application, never hardcode credentials like this.
-    // Use a secure authentication system (e.g., Firebase Auth, OAuth).
     if (username === 'Fahim' && password === '1234') {
       setUser(username);
       setUserBool(true);
@@ -806,7 +796,7 @@ function App() {
               <li>+8801881802111 (Fahim)</li>
               <li>info@urbancart.com</li>
               <li className="mt-4 font-bold">Corporate Address</li>
-              <li>Suhrawardy Hall, 504 no room</li>
+              <li>Suhrawardy Hall, 507 no room</li>
               <li>   </li>
               <li className="mt-4 font-bold">TRADE LICENSE NO</li>
               <li>TRAD/DNCC/145647/2025</li>
