@@ -2,15 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
 
+import SignupPage from './SignupPage';
+
 // Corrected image paths to use direct URLs or accessible paths
 const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
 const basket_of_organic_foods = 'https://static.vecteezy.com/system/resources/previews/047/830/714/non_2x/a-vibrant-assortment-of-fresh-vegetables-including-peppers-onions-lettuce-broccoli-tomatoes-corn-and-garlic-arranged-on-a-white-background-png.png'; // Using the provided contentFetchId URL
 
-
-// Placeholder URLs for your 30 product images - REMOVED, as images are now fetched from DB
-// const product1Image = 'https://www.sroddhaa.com/wp-content/uploads/2021/11/fresh-wet-apple-fruits-isolated-white-background-isolated-wet-apples-green-yellow-red-apple-fruits-isolated-white-background-135283017.jpg';
-// const product2Image = 'https://m2ce.sindabad.com/pub/media/catalog/product//b/r/brand-thumb-arla-organic.jpg';
-// ... (all other productXImage constants removed) ...
 
 
 function App() {
@@ -18,23 +15,60 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [user, setUser] = useState('');
   const [userBool, setUserBool] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
 
-  const handleSignInClick = () => {
-    setShowLoginModal(true);
+
+  // Added by Fahim ... ...
+  // MODIFIED: handleLogin function to make an API call to the backend
+  const handleLogin = async (username, password) => { // Make this function async
+    try {
+      // Data to be sent to the backend
+      const loginData = {
+        username: username, // This will be matched against CUSTOMER_EMAIL or CUSTOMER_NAME
+        password: password,
+      };
+
+      // Make the POST request to your backend's sign-in endpoint
+      // Ensure this URL matches your backend server's address and port
+      const response = await fetch('http://localhost:5000/api/auth/signIn', {
+        method: 'POST', // HTTP method is POST
+        headers: {
+          'Content-Type': 'application/json', // Inform the server that the body is JSON
+        },
+        body: JSON.stringify(loginData), // Convert JS object to JSON string
+      });
+
+      const data = await response.json(); // Parse the JSON response from the server
+
+      if (response.ok) { // Check if the HTTP status is 2xx (success)
+        console.log('Sign-in successful:', data.message);
+        // Update client-side state with user info received from the backend
+        setUser(data.user.username); // Using data.user.name as the display name
+        setUserBool(true); // Set user as logged in
+        setShowLoginModal(false); // Close the login modal
+
+        // IMPORTANT: In a real application, if your backend sends a JWT,
+        // you would store it here (e.g., in localStorage) for future authenticated requests.
+        // Example: localStorage.setItem('authToken', data.token);
+
+        alert('Sign-in successful! Welcome, ' + data.user.name); // Provide user feedback
+      } else {
+        // Handle server-side errors (e.g., 401 Invalid credentials, 400 missing fields)
+        console.error('Sign-in failed:', data.message || 'Unknown error');
+        alert('Sign-in failed: ' + (data.message || 'Please check your credentials.'));
+      }
+    } catch (error) {
+      // Handle network errors or issues with the fetch operation itself
+      console.error('Network error during sign-in:', error);
+      alert('An error occurred during sign-in. Please try again later.');
+    }
   };
 
-  const handleLogin = (username, password) => {
-    // IMPORTANT: In a real application, never hardcode credentials like this.
-    // Use a secure authentication system (e.g., Firebase Auth, OAuth).
-    if (username === 'Fahim' && password === '1234') {
-      setUser(username);
-      setUserBool(true);
-      setShowLoginModal(false);
-    } else {
-      console.log('Invalid credentials');
-    }
-    console.log('Logging in:', username);
-    console.log('status: ', userBool);
+
+  // Added by Fahim ... ...
+  // to handle signup click
+  const handleSignupClick = () => { // <--- ADD THIS FUNCTION
+    setShowSignupModal(true);
   };
 
 
@@ -286,6 +320,53 @@ function App() {
 
   return (
     <>
+
+      {/* show signup page */}
+      {showSignupModal && ( // <--- ADD THIS CONDITIONAL RENDERING BLOCK
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="modal-overlay" style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <div className="modal-box" style={{
+              background: 'white',
+              padding: 20,
+              borderRadius: 8,
+              minWidth: 300,
+              position: 'relative',
+            }}>
+              <button onClick={() => setShowSignupModal(false)}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: 18,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+              {/* Render the SignupPage component here */}
+              <SignupPage onClose={() => setShowSignupModal(false)} /> {/* Pass a close handler */}
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
+
+
+
+
+
+
       {/* show login page */}
       {showLoginModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -478,7 +559,7 @@ function App() {
                     <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
                       Sign In
                     </button>
-                    <button style={signupBtnStyle}>
+                    <button style={signupBtnStyle}  onClick={() =>setShowSignupModal(true)}>
                       Sign Up
                     </button>
                   </div>
