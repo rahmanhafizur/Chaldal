@@ -389,7 +389,7 @@ function App() {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                       >
                         {/* Display category ID for now, as backend sends IDs */}
-                        Category ID: {category}
+                        {category}
                       </button>
                     ))}
                   </div>
@@ -584,7 +584,7 @@ function App() {
             {/* Display current category if selected */}
             {/* Only show if products are not loading and no error */}
             {!loadingProducts && !productFetchError && selectedCategory && (
-              <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">Category ID: {selectedCategory}</h2>
+              <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">{selectedCategory}</h2>
             )}
 
             {/* Display message if no products found */}

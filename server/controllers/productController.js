@@ -11,7 +11,10 @@ const getProducts = async (req, res) => {
         // Column names adjusted to match your new schema: PRODUCT_NAME, UNIT_PRICE, PRODUCT_IMAGE, CATEGORY_ID, BRAND_ID
         // For 'category' name (e.g., "Fruits & Vegetables"), you'd typically JOIN with the CATEGORY table.
         // For simplicity, we'll return CATEGORY_ID and BRAND_ID directly, as indicated by the schema.
-        const sql = `SELECT PRODUCT_ID, PRODUCT_NAME, UNIT_PRICE, DESCRIPTION, PRODUCT_IMAGE, CATEGORY_ID, BRAND_ID FROM PRODUCT ORDER BY PRODUCT_ID`;
+        const sql = `SELECT P.PRODUCT_ID, P.PRODUCT_NAME, P.UNIT_PRICE, P.DESCRIPTION, P.PRODUCT_IMAGE, C.CATEGORY_NAME, P.BRAND_ID 
+                    FROM PRODUCT P JOIN CATEGORY C 
+                    ON P.CATEGORY_ID = C.CATEGORY_ID
+                    ORDER BY PRODUCT_ID`;
         const result = await connection.execute(sql);
 
         // Map the result to a friendly JSON format
