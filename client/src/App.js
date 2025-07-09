@@ -71,6 +71,13 @@ function App() {
     setShowSignupModal(true);
   };
 
+  // Added by Fahim ... ...
+  // NEW FUNCTION: Handles click on "Sign In" from the signup modal
+  const handleSignInFromSignup = () => {
+    setShowSignupModal(false); // Close the signup modal
+    setShowLoginModal(true);    // Open the login modal
+  };
+
 
 
   const headerStyle = {
@@ -321,48 +328,53 @@ function App() {
   return (
     <>
 
+      // Added by Fahim ... ...
+      // to show the signup page
+      // the SignupPage is kept in another file named SignupPage
       {/* show signup page */}
       {showSignupModal && ( // <--- ADD THIS CONDITIONAL RENDERING BLOCK
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="modal-overlay" style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            <div className="modal-box" style={{
-              background: 'white',
-              padding: 20,
-              borderRadius: 8,
-              minWidth: 300,
-              position: 'relative',
+        <>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
+            <div className="modal-overlay" style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}>
-              <button onClick={() => setShowSignupModal(false)}
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: 18,
-                  cursor: 'pointer'
-                }}
-              >
-                ✕
-              </button>
-              {/* Render the SignupPage component here */}
-              <SignupPage onClose={() => setShowSignupModal(false)} /> {/* Pass a close handler */}
+              <div className="modal-box" style={{
+                background: 'white',
+                padding: 20,
+                borderRadius: 8,
+                minWidth: 300,
+                position: 'relative',
+                maxHeight: '90vh', // Limit height to 90% of viewport height
+                overflowY: 'auto', // Enable vertical scrolling
+              }}>
+                <button onClick={() => setShowSignupModal(false)}
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: 18,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✕
+                </button>
+                {/* Render the SignupPage component here */}
+                <SignupPage
+                  onClose={() => setShowSignupModal(false)}
+                  onSignInClick={handleSignInFromSignup} // <--- NEW PROP PASSED HERE
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
-
-
-
-
-
 
 
 
@@ -559,7 +571,7 @@ function App() {
                     <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
                       Sign In
                     </button>
-                    <button style={signupBtnStyle}  onClick={() =>setShowSignupModal(true)}>
+                    <button style={signupBtnStyle} onClick={() => setShowSignupModal(true)}>
                       Sign Up
                     </button>
                   </div>
@@ -661,7 +673,7 @@ function App() {
             {/* Loading/Error States for Products - ADDED THESE AS PART OF DB INTEGRATION */}
             {loadingProducts && <p className="text-gray-600 text-lg col-span-full">Loading products...</p>}
             {productFetchError && <p className="text-red-500 text-lg col-span-full">Error loading products: {productFetchError}</p>}
-            
+
             {/* Display current category if selected */}
             {/* Only show if products are not loading and no error */}
             {!loadingProducts && !productFetchError && selectedCategory && (
@@ -862,124 +874,124 @@ function App() {
                       </div>
                     ))}
                   </div>
-                <div className="mt-6 flex justify-between items-center border-t pt-4">
-                  <p className="text-xl font-bold text-gray-900">Total:</p>
-                  <p className="text-xl font-bold text-blue-600"> ৳{getCartTotal()}</p>
-                </div>
-                <button className="mt-6 w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition">
-                  Proceed to Checkout
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
-          {/* Contact Section */}
-          <div>
-            <h3 className="font-bold text-lg mb-4 text-white uppercase">Contact</h3>
-            <ul className="space-y-2">
-              <li>+8801760434188 (Hafiz)</li>
-              <li>+8801881802111 (Fahim)</li>
-              <li>info@urbancart.com</li>
-              <li className="mt-4 font-bold">Corporate Address</li>
-              <li>Suhrawardy Hall, 504 no room</li>
-              <li>   </li>
-              <li className="mt-4 font-bold">TRADE LICENSE NO</li>
-              <li>TRAD/DNCC/145647/2025</li>
-            </ul>
-          </div>
-
-          {/* Other Pages Section */}
-          <div>
-            <h3 className="font-bold text-lg mb-4 text-white uppercase">Other Pages</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Help</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Terms of use</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Refund & Return Policy</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Sitemap</a></li>
-            </ul>
-          </div>
-
-          {/* Company Section */}
-          <div>
-            <h3 className="font-bold text-lg mb-4 text-white uppercase">Company</h3>
-            <ul className="space-y-2">
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Manager</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Business</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Delivery</a></li>
-            </ul>
-          </div>
-
-          {/* Download Our App Section */}
-          <div className="md:col-span-1">
-            <h3 className="font-bold text-lg mb-4 text-white uppercase">Download Our App</h3>
-            <p className="text-gray-300 mb-4">
-              Tackle your to-do list wherever you are with our mobile app & make your life easy.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-4 justify-center md:justify-start">
-              <a href="#" className="inline-block">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store" className="h-10 w-auto" />
-              </a>
-              <a href="#" className="inline-block">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-10 w-auto" />
-              </a>
-            </div>
-            {/* Social Media Icons (using placeholders for now, can be replaced with Lucide-React or Font Awesome) */}
-            <div className="flex space-x-4 justify-center md:justify-start mt-4">
-              <a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm3.284 8.74h-2.153v-1.63c0-.528.238-.807.82-.807h1.332V3.79c-.23-.03-.99-.095-1.92-.095-2.02 0-3.375 1.233-3.375 3.498v2.097h-2.253V12h2.253v8.74h2.72V12h1.802l.27-3.26h-2.072z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28.466-.41.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
-                </svg>
-              </a>
-              <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
-                <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.346.14-.897.31-1.75.35-1.72.084-2.213.084-2.628.084s-.908 0-2.628-.084c-.854-.04-1.405-.21-1.75-.35-.49-.208-.79-.467-1.09-.764-.3-.298-.557-.6-.764-1.09-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
-                </svg>
-              </a>
+                  <div className="mt-6 flex justify-between items-center border-t pt-4">
+                    <p className="text-xl font-bold text-gray-900">Total:</p>
+                    <p className="text-xl font-bold text-blue-600"> ৳{getCartTotal()}</p>
+                  </div>
+                  <button className="mt-6 w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition">
+                    Proceed to Checkout
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Bottom Bar (Moved from original footer position for clearer structure) */}
-        <div className="bg-gray-900 py-4 text-center text-sm flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 lg:px-8">
-          <button
-            onClick={handleScrollToTop}
-            className="mb-4 md:mb-0 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center justify-center space-x-2"
-          >
-            <span>Scroll to top</span>
-            {/* Simple arrow icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-          </button>
-          <p className="mb-4 md:mb-0 text-gray-400">Copyright © {new Date().getFullYear()} UrbanCart Platform Limited | All Rights Reserved</p>
-          <button className="px-6 py-2 rounded-full bg-gray-600 text-white font-semibold shadow-lg cursor-not-allowed">
-            We are offline now
-          </button>
-        </div>
-      </footer>
 
-      {/* Floating Chat Button */}
-      <button
-        className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 z-50 flex items-center justify-center"
-        aria-label="Open chat"
-        title="Chat with us"
-      >
-        <MessageCircle className="w-7 h-7" />
-      </button>
-    </div>
+        {/* Footer */}
+        <footer className="bg-gray-800 text-white mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
+            {/* Contact Section */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-white uppercase">Contact</h3>
+              <ul className="space-y-2">
+                <li>+8801760434188 (Hafiz)</li>
+                <li>+8801881802111 (Fahim)</li>
+                <li>info@urbancart.com</li>
+                <li className="mt-4 font-bold">Corporate Address</li>
+                <li>Suhrawardy Hall, 504 no room</li>
+                <li>   </li>
+                <li className="mt-4 font-bold">TRADE LICENSE NO</li>
+                <li>TRAD/DNCC/145647/2025</li>
+              </ul>
+            </div>
+
+            {/* Other Pages Section */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-white uppercase">Other Pages</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Help</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Terms of use</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Refund & Return Policy</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Sitemap</a></li>
+              </ul>
+            </div>
+
+            {/* Company Section */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-white uppercase">Company</h3>
+              <ul className="space-y-2">
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Manager</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Business</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Delivery</a></li>
+              </ul>
+            </div>
+
+            {/* Download Our App Section */}
+            <div className="md:col-span-1">
+              <h3 className="font-bold text-lg mb-4 text-white uppercase">Download Our App</h3>
+              <p className="text-gray-300 mb-4">
+                Tackle your to-do list wherever you are with our mobile app & make your life easy.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 mb-4 justify-center md:justify-start">
+                <a href="#" className="inline-block">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on the App Store" className="h-10 w-auto" />
+                </a>
+                <a href="#" className="inline-block">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-10 w-auto" />
+                </a>
+              </div>
+              {/* Social Media Icons (using placeholders for now, can be replaced with Lucide-React or Font Awesome) */}
+              <div className="flex space-x-4 justify-center md:justify-start mt-4">
+                <a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                  <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm3.284 8.74h-2.153v-1.63c0-.528.238-.807.82-.807h1.332V3.79c-.23-.03-.99-.095-1.92-.095-2.02 0-3.375 1.233-3.375 3.498v2.097h-2.253V12h2.253v8.74h2.72V12h1.802l.27-3.26h-2.072z" clipRule="evenodd" />
+                  </svg>
+                </a>
+                <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                  <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28.466-.41.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
+                  </svg>
+                </a>
+                <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                  <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.346.14-.897.31-1.75.35-1.72.084-2.213.084-2.628.084s-.908 0-2.628-.084c-.854-.04-1.405-.21-1.75-.35-.49-.208-.79-.467-1.09-.764-.3-.298-.557-.6-.764-1.09-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar (Moved from original footer position for clearer structure) */}
+          <div className="bg-gray-900 py-4 text-center text-sm flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 lg:px-8">
+            <button
+              onClick={handleScrollToTop}
+              className="mb-4 md:mb-0 px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center justify-center space-x-2"
+            >
+              <span>Scroll to top</span>
+              {/* Simple arrow icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+            </button>
+            <p className="mb-4 md:mb-0 text-gray-400">Copyright © {new Date().getFullYear()} UrbanCart Platform Limited | All Rights Reserved</p>
+            <button className="px-6 py-2 rounded-full bg-gray-600 text-white font-semibold shadow-lg cursor-not-allowed">
+              We are offline now
+            </button>
+          </div>
+        </footer>
+
+        {/* Floating Chat Button */}
+        <button
+          className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 z-50 flex items-center justify-center"
+          aria-label="Open chat"
+          title="Chat with us"
+        >
+          <MessageCircle className="w-7 h-7" />
+        </button>
+      </div>
     </>
   );
 }
