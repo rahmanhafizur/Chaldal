@@ -1,0 +1,15 @@
+-- This trigger will automatically create a new
+-- row in the cart table whenever a new customer
+-- is added.
+
+CREATE
+OR REPLACE TRIGGER CREATING_NEW_CART AFTER INSERT ON CUSTOMER FOR EACH ROW
+DECLARE
+USER_ID NUMBER;
+BEGIN
+    USER_ID := : NEW.CUSTOMER_ID;
+    INSERT INTO CART (CUSTOMER_ID)
+    VALUES
+    (USER_ID);
+END;
+/
