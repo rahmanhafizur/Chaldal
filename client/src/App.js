@@ -1,5 +1,5 @@
 // CHALDAL/client/src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
 
 import SignupPage from './SignupPage';
@@ -13,9 +13,61 @@ const basket_of_organic_foods = 'https://static.vecteezy.com/system/resources/pr
 function App() {
   // state for managing the sign in page
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [user, setUser] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
+
+  
+  // State for managing the cart
+  const [cartItems, setCartItems] = useState([]);
+  const [showCartModal, setShowCartModal] = useState(false);
+
+  // State for products fetched from the backend (moved up for broader access)
+  const [products, setProducts] = useState([]); // This will now store fetched products
+  const [loadingProducts, setLoadingProducts] = useState(true); // To show loading indicator
+  const [productFetchError, setProductFetchError] = useState(null); // To handle fetch errors
+
+
+  // Added by Fahim
+  // Merging the cart items after signIn
+  // This function now explicitly takes the customerId and the current local cart items
+  const mergeCartItems = async(currentCustomerId) => {
+    if (currentCustomerId) { // Ensure we have a customerId to proceed
+      console.log('check1: Merging cart items for user:', currentCustomerId);
+      try {
+        // 1. Fetch the user's existing cart from the backend
+        const response = await fetch('http://localhost:5000/api/getCartItems', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: currentCustomerId, // Use the passed customerId
+          }),
+        });
+
+        const backendCartData = await response.json();
+
+        if (response.ok) {
+          console.log('Got backend cart items successfully:', backendCartData.message);
+
+          setCartItems(backendCartData);
+
+        } else {
+          console.error('Failed to fetch cart items from backend:', backendCartData.message || 'Unknown error');
+          alert('Failed to fetch cart items: ' + (backendCartData.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error fetching/merging cart items:', error);
+        alert('Network error fetching/merging cart items. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cannot merge cart items.');
+    }
+  }
+
+
 
 
   // Added by Fahim ... ...
@@ -43,15 +95,18 @@ function App() {
       if (response.ok) { // Check if the HTTP status is 2xx (success)
         console.log('Sign-in successful:', data.message);
         // Update client-side state with user info received from the backend
-        setUser(data.user.username); // Using data.user.name as the display name
+        setCustomerId(data.user.id);
+        setUsername(data.user.username); // Using data.user.name as the display name
         setUserBool(true); // Set user as logged in
         setShowLoginModal(false); // Close the login modal
+
+        mergeCartItems(data.user.id)
 
         // IMPORTANT: In a real application, if your backend sends a JWT,
         // you would store it here (e.g., in localStorage) for future authenticated requests.
         // Example: localStorage.setItem('authToken', data.token);
 
-        alert('Sign-in successful! Welcome, ' + data.user.name); // Provide user feedback
+        // alert('Sign-in successful! Welcome, ' + data.user.name); // Provide user feedback
       } else {
         // Handle server-side errors (e.g., 401 Invalid credentials, 400 missing fields)
         console.error('Sign-in failed:', data.message || 'Unknown error');
@@ -65,11 +120,6 @@ function App() {
   };
 
 
-  // Added by Fahim ... ...
-  // to handle signup click
-  const handleSignupClick = () => { // <--- ADD THIS FUNCTION
-    setShowSignupModal(true);
-  };
 
   // Added by Fahim ... ...
   // NEW FUNCTION: Handles click on "Sign In" from the signup modal
@@ -174,19 +224,10 @@ function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [autoplayPaused, setAutoplayPaused] = useState(false);
 
-  // State for managing the cart
-  const [cartItems, setCartItems] = useState([]);
-  const [showCartModal, setShowCartModal] = useState(false);
-
   // State for search functionality
   const [searchTerm, setSearchTerm] = useState('');
 
   // ---------- DATABASE INTEGRATION CHANGES START HERE ----------
-  // State for products fetched from the backend
-  const [products, setProducts] = useState([]); // This will now store fetched products
-  const [loadingProducts, setLoadingProducts] = useState(true); // To show loading indicator
-  const [productFetchError, setProductFetchError] = useState(null); // To handle fetch errors
-
   // Effect for fetching products from backend
   useEffect(() => {
     const fetchProducts = async () => {
@@ -281,30 +322,198 @@ function App() {
     });
   };
 
+  // // Cart Functions
+  // const addToCart = (product) => {
+  //   setCartItems((prevItems) => {
+  //     const existingItem = prevItems.find((item) => item.id === product.id);
+  //     if (existingItem) {
+  //       return prevItems.map((item) =>
+  //         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+  //       );
+  //     } else {
+  //       return [...prevItems, { ...product, quantity: 1 }];
+  //     }
+  //   });
+  // };
+
+
+
+  // Added by Fahim ... ...
+  // cart function connecting to the database
   // Cart Functions
-  const addToCart = (product) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+  const addToCart = async (product) => {
+    // Calculate the new state and quantity BEFORE setting the state
+    const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
+    let newCartItems;
+    let newProductQuantity;
+
+    if(userBool && customerId) {
       if (existingItem) {
-        return prevItems.map((item) =>
+        newCartItems = cartItems.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
+        newProductQuantity = existingItem.quantity + 1; // Calculate based on existing item
       } else {
-        return [...prevItems, { ...product, quantity: 1 }];
+        newCartItems = [...cartItems, { ...product, quantity: 1 }];
+        newProductQuantity = 1; // New item starts with quantity 1
       }
-    });
+
+      // Now, update the local cartItems state
+      setCartItems(newCartItems);
+    }
+
+    // Check if the user is logged in
+    if (userBool && customerId) {
+      try {
+        console.log(`User ${customerId} adding product ${product.id}. New quantity: ${newProductQuantity}`);
+        // Make an API call to update the cart in the backend
+        const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId,
+            productId: product.id,
+            quantity: newProductQuantity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Backend cart updated successfully:', data.message);
+        } else {
+          console.error('Failed to update backend cart:', data.message || 'Unknown error');
+          // If backend update fails, revert the local state for consistency
+          setCartItems(cartItems); // Revert to the state before this addition
+          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error updating cart in backend:', error);
+        // If network error, revert the local state for consistency
+        setCartItems(cartItems); // Revert to the state before this addition
+        alert('Network error updating cart. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cart updated locally only.');
+      alert('Please Sign In');
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+
+  // const removeFromCart = async (productId) => {
+  //   setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  // };
+
+   const removeFromCart = async (product) => {
+    setCartItems((prevItems) => prevItems.filter((item) => item.id !== product.id));
+
+    const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
+    let newCartItems;
+    let newProductQuantity = 0;
+
+    // if (existingItem) {
+    //   newCartItems = cartItems.map((item) =>
+    //     item.id === product.id ? { ...item, quantity: item.quantity - 1 } : item
+    //   );
+    //   newProductQuantity = existingItem.quantity - 1; // Calculate based on existing item
+    // } else {
+    //   newCartItems = [...cartItems, { ...product, quantity: 0 }];
+    //   newProductQuantity = 0; // New item starts with quantity 1
+    // }
+
+    // Now, update the local cartItems state
+    // setCartItems(newCartItems);
+
+    // Check if the user is logged in
+    if (userBool && customerId) {
+      try {
+        console.log(`User ${customerId} adding product ${product.id}. New quantity: ${newProductQuantity}`);
+        // Make an API call to update the cart in the backend
+        const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId,
+            productId: product.id,
+            quantity: newProductQuantity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Backend cart updated successfully:', data.message);
+        } else {
+          console.error('Failed to update backend cart:', data.message || 'Unknown error');
+          // If backend update fails, revert the local state for consistency
+          setCartItems(cartItems); // Revert to the state before this addition
+          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error updating cart in backend:', error);
+        // If network error, revert the local state for consistency
+        setCartItems(cartItems); // Revert to the state before this addition
+        alert('Network error updating cart. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cart updated locally only.');
+    }
+
   };
 
-  const updateCartQuantity = (productId, newQuantity) => {
+  // Modified updateCartQuantity to accept an optional customerId
+  const updateCartQuantity = async (productId, newProductQuantity) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
+        item.id === productId ? { ...item, quantity: Math.max(1, newProductQuantity) } : item
       )
     );
+
+    // The userBool and customerId here will be from the latest render cycle
+    // which should be updated after a successful login and subsequent re-render.
+    console.log(`userBool: ${userBool}, customerId: ${customerId}, username: ${username} in updateCartQuantity`);
+    
+    // Only proceed with backend update if a customerId is available
+    if (customerId) {
+      try {
+        console.log(`User ${customerId} updating product ${productId}. New quantity: ${newProductQuantity}`);
+        newProductQuantity = Math.max(1, newProductQuantity);
+        // Make an API call to update the cart in the backend
+        const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId, // Use the determined customerId
+            productId: productId,
+            quantity: newProductQuantity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Backend cart updated successfully:', data.message);
+        } else {
+          console.error('Failed to update backend cart:', data.message || 'Unknown error');
+          // If backend update fails, revert the local state for consistency
+          setCartItems(cartItems); // Revert to the state before this addition
+          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error updating cart in backend:', error);
+        // If network error, revert the local state for consistency
+        setCartItems(cartItems); // Revert to the state before this addition
+        alert('Network error updating cart. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cart updated locally only.');
+    }
   };
 
   const getCartTotal = () => {
@@ -558,10 +767,12 @@ function App() {
               <header style={headerStyle}>
                 {userBool ? (
                   <div style={signedIn}>
-                    <div style={avatarStyle}>{user[0].toUpperCase()}</div>
+                    <div style={avatarStyle}>{username[0].toUpperCase()}</div>
                     <button style={logoutBtnStyle} onClick={() => {
-                      setUser("");
+                      setCustomerId("");
+                      setUsername("");
                       setUserBool(false);
+                      setCartItems([]);
                     }}>
                       Sign Out
                     </button>
@@ -864,7 +1075,7 @@ function App() {
                             +
                           </button>
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item)}
                             className="text-red-500 hover:text-red-700 transition"
                             aria-label={`Remove ${item.name}`}
                           >
