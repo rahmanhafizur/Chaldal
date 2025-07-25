@@ -1,24 +1,30 @@
 // CHALDAL/client/src/App.js
-import React, { useState, useEffect, use } from 'react';
-import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star } from 'lucide-react'; // Added Star icon
+
 
 import SignupPage from './SignupPage';
 
-// Corrected image paths to use direct URLs or accessible paths
-const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
-const basket_of_organic_foods = 'https://static.vecteezy.com/system/resources/previews/047/830/714/non_2x/a-vibrant-assortment-of-fresh-vegetables-including-peppers-onions-lettuce-broccoli-tomatoes-corn-and-garlic-arranged-on-a-white-background-png.png'; // Using the provided contentFetchId URL
-
-
+const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
+const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
+  // State for managing the current page view ('home' or 'productDetail')
+  const [currentPage, setCurrentPage] = useState('home');
+  // State for storing the product data when a product is clicked
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
   // state for managing the sign in page
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const [customerId, setCustomerId] = useState('');
   const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
-  const [showSignupModal, setShowSignupModal] = useState(false);
 
-  
+  const handleSignInClick = () => {
+    setShowLoginModal(true);
+  };
+
   // State for managing the cart
   const [cartItems, setCartItems] = useState([]);
   const [showCartModal, setShowCartModal] = useState(false);
@@ -117,8 +123,9 @@ function App() {
       console.error('Network error during sign-in:', error);
       alert('An error occurred during sign-in. Please try again later.');
     }
+    console.log('Logging in:', username);
+    console.log('status: ', userBool);
   };
-
 
 
   // Added by Fahim ... ...
@@ -141,16 +148,6 @@ function App() {
   const signedOut = {
     display: "flex",
     gap: "10px",
-  };
-
-  const baseBtnStyle = { // KEEPING THIS AS PROVIDED BY USER
-    padding: "10px 20px",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "bold",
-    transition: "background-color 0.3s",
   };
 
   const loginBtnStyle = {
@@ -214,8 +211,6 @@ function App() {
     border: "2px solid #007bff",
   };
 
-
-
   // State for managing the categories menu visibility
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -236,13 +231,19 @@ function App() {
         // Ensure this URL matches your backend server's address and port
         const response = await fetch('http://localhost:5000/api/products');
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // If the response is not OK, it means there was a server error or network issue
+          throw new Error(`HTTP error! status: ${response.status}. Please ensure your backend server is running and accessible at http://localhost:5000.`);
         }
         const data = await response.json();
         setProducts(data); // Set the fetched products to state
       } catch (error) {
         console.error("Could not fetch products:", error);
-        setProductFetchError(error.message); // Store the error message
+        // Provide a more user-friendly error message for common network issues
+        if (error.message.includes("Failed to fetch")) {
+          setProductFetchError("Failed to connect to the backend server. Please ensure your Node.js server is running on http://localhost:5000 and that CORS is configured correctly.");
+        } else {
+          setProductFetchError(error.message); // Store the error message
+        }
       } finally {
         setLoadingProducts(false); // Always set loading to false after attempt
       }
@@ -253,28 +254,21 @@ function App() {
 
   // ---------- DATABASE INTEGRATION CHANGES END HERE ----------
 
-
-  // Slideshow data (as provided by user)
+  // Slideshow data (as provided by user) - REMOVED title and description
   const slides = [
     {
       id: 1,
-      imageUrl: 'https://placehold.co/1200x400/FFDDC1/E67E22?text=Big+Savings+on+Groceries!',
-      title: 'Mega Grocery Sale!',
-      description: 'Get up to 50% off on all fresh produce and pantry staples.',
+      imageUrl: 'https://d2t8nl1y0ie1km.cloudfront.net/images/thumbs/679b43cde3368b3c908beff4_Uniliver-banner_Web_1552.webp',
       link: '#'
     },
     {
       id: 2,
-      imageUrl: 'https://placehold.co/1200x400/C1FFD1/2ECC71?text=Exclusive+Electronics+Deals',
-      title: 'Electronics Extravaganza',
-      description: 'Discover amazing deals on smartphones, laptops, and more.',
+      imageUrl: 'https://d2t8nl1y0ie1km.cloudfront.net/images/thumbs/679b4b026f42bdb0a6494a20_Spice_Web_1552.webp',
       link: '#'
     },
     {
       id: 3,
-      imageUrl: 'https://placehold.co/1200x400/C1D1FF/3498DB/000000?text=Home+%26+Living+Essentials',
-      title: 'Home Comforts Collection',
-      description: 'Transform your home with our stylish and affordable decor.',
+      imageUrl: 'https://d2t8nl1y0ie1km.cloudfront.net/images/thumbs/681b31444627ed704a817a7b_668681ca0b15b6fc211b0d4f_aci%20banner%20DESKTOP_1552.jpeg',
       link: '#'
     }
   ];
@@ -309,7 +303,6 @@ function App() {
     setTimeout(() => setAutoplayPaused(false), 3000); // Resume after 3 seconds
   };
 
-
   // Get unique categories from products (now derived from fetched products)
   // The 'category' property on the product objects from backend will be CATEGORY_ID (a number)
   // Display "Category ID: {category}" to reflect this.
@@ -320,6 +313,14 @@ function App() {
       top: 0,
       behavior: 'smooth'
     });
+  };
+
+  // Function to handle scrolling to a specific section
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   // // Cart Functions
@@ -524,6 +525,13 @@ function App() {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // Function to handle product click
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+    setCurrentPage('productDetail');
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top when navigating to product detail
+  };
+
   // Filtered products based on search term and selected category
   const filteredProducts = products.filter(product => {
     // These property names (product.name, product.description, product.category)
@@ -534,9 +542,213 @@ function App() {
     return matchesSearch && matchesCategory;
   });
 
+  // Product Detail Page Component
+  const ProductDetailPage = ({ product, onBackClick, onAddToCart }) => {
+    const [userRating, setUserRating] = useState(0);
+    const [userReview, setUserReview] = useState('');
+
+    const handleRatingClick = (rating) => {
+      setUserRating(rating);
+    };
+
+    const handleSubmitReview = () => {
+      if (userReview.trim() === '' || userRating === 0) {
+        // Using a custom modal for alerts instead of window.alert
+        // For this example, we'll just log and reset. In a real app, you'd show a modal.
+        console.warn('Please provide a rating and a review.');
+        return;
+      }
+      console.log('Submitting Review:', { product: product.name, rating: userRating, review: userReview });
+      // In a real application, you would send this data to a backend API
+      setUserRating(0);
+      setUserReview('');
+      // Show a success message to the user (e.g., via a temporary notification or modal)
+      console.log('Review submitted successfully!');
+    };
+
+    if (!product) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+          <p className="text-xl text-gray-700">Product not found.</p>
+          <button
+            onClick={onBackClick}
+            className="mt-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+          >
+            Back to Home
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-gray-800">
+        {/* Breadcrumbs */}
+        <nav className="text-xs text-gray-500 mb-6"> {/* Smaller font */}
+          <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">{product.name}</span>
+        </nav>
+
+        <div className="bg-white p-8 rounded-xl shadow-lg flex flex-col md:flex-row gap-8">
+          {/* Product Image Section */}
+          <div className="md:w-1/2 flex flex-col items-center">
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full max-w-md h-auto object-contain rounded-lg shadow-md"
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x300/cccccc/333333?text=Image+Error'; }}
+            />
+            {/* Thumbnail/Small Image (as per screenshot) */}
+            <div className="mt-4 w-20 h-20 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center"> {/* Smaller thumbnail */}
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/80x80/cccccc/333333?text=Thumb'; }}
+              />
+            </div>
+          </div>
+
+          {/* Product Details Section */}
+          <div className="md:w-1/2 flex flex-col">
+            <h1 className="text-2xl font-extrabold text-blue-700 mb-1">{product.name}</h1> {/* Even smaller font */}
+            <p className="text-sm text-gray-600 mb-3">{product.description}</p> {/* Even smaller font */}
+
+            <div className="flex items-center mb-3"> {/* Smaller margin */}
+              <span className="text-xl font-bold text-red-600">৳{product.price.toFixed(2)}</span> {/* Even smaller font */}
+              <span className="text-xs text-gray-500 ml-1">/ Per Unit</span> {/* Even smaller font */}
+            </div>
+
+            <div className="flex items-center gap-3 mb-5"> {/* Smaller gap and margin */}
+              <button
+                onClick={() => onAddToCart(product)}
+                className="px-6 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center space-x-1" // Smaller button, text
+              >
+                <span>+ Add to Bag</span>
+              </button>
+              <button className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition"> {/* Smaller padding */}
+                <Heart className="w-4 h-4" /> {/* Smaller icon */}
+              </button>
+              <button className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition"> {/* Smaller padding */}
+                <Share2 className="w-4 h-4" /> {/* Smaller icon */}
+              </button>
+            </div>
+
+            <div className="mb-5"> {/* Smaller margin */}
+              <h3 className="font-semibold text-sm text-gray-700 mb-1">Product Tags :</h3> {/* Smaller font */}
+              {/* Assuming tags might be an array of strings on the product object */}
+              <div className="flex flex-wrap gap-1"> {/* Smaller gap */}
+                {product.tags && product.tags.map((tag, index) => (
+                  <span key={index} className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full"> {/* Adjusted font, padding */}
+                    {tag}
+                  </span>
+                ))}
+                {/* Placeholder tags if product.tags is not available */}
+                {!product.tags && (
+                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full"> {/* Adjusted font, padding */}
+                    Fresh-vegetables
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* SKU and In-stock status */}
+            <div className="bg-gray-100 p-3 rounded-lg mb-5"> {/* Smaller padding, margin */}
+              <div className="flex justify-between items-center mb-1"> {/* Smaller margin */}
+                <span className="font-semibold text-xs text-gray-700">SKU: {product.sku || 'N/A'}</span> {/* Smaller font */}
+                <span className="text-green-600 font-semibold flex items-center text-xs"> {/* Smaller font */}
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"> {/* Smaller icon */}
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  In-stock
+                </span>
+              </div>
+              <p className="text-xs text-gray-600">A seasonal delight for your culinary creations.</p> {/* Smaller font */}
+            </div>
+
+            {/* Delivery and Location */}
+            <div className="mb-5"> {/* Smaller margin */}
+              <div className="flex items-center text-xs text-gray-700 mb-1"> {/* Smaller font */}
+                <span className="mr-1 text-blue-500"><MapPin className="w-4 h-4" /></span> {/* Smaller icon */}
+                <span>Delivery: 1-2 hours</span>
+              </div>
+              <div className="flex items-center text-xs text-gray-700"> {/* Smaller font */}
+                <span className="mr-1 text-blue-500"><MapPin className="w-4 h-4" /></span> {/* Smaller icon */}
+                <span>Location: <a href="#" className="text-blue-600 hover:underline">Select your delivery location</a></span>
+              </div>
+            </div>
+
+            {/* Payment Options */}
+            <div className="mb-6">
+              <h3 className="font-semibold text-base text-gray-700 mb-2">Card Payment</h3> {/* Smaller font */}
+              <div className="flex items-center space-x-4">
+                {/* Placeholder for payment icons */}
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6 w-auto" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/2560px-MasterCard_Logo.svg.png" alt="MasterCard" className="h-6 w-auto" />
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIzaEijMRVmEe2vvyBj7HR95LYnR3Vv747CKMQoqt_r8Dpe65Fgvgcux3TX7Ffvv6GjqU&usqp=CAU" alt="Nagad" className="h-6 w-auto" />
+              </div>
+            </div>
+
+            {/* Mobile Payment and COD */}
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <img src="https://downloadr2.apkmirror.com/wp-content/uploads/2022/08/84/62f92578037f0.png" alt="bKash" className="h-8 w-auto" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <img src="https://play-lh.googleusercontent.com/EQC9NtbtRvsNcU1r_5Dr8pWm3hPfN3OjGjzkOqzCEPDJvqBGKyfU9-a2ajNtcrIg1rs" alt="Nagad" className="h-8 w-auto" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <img src="https://play-lh.googleusercontent.com/sDY6YSDobbm_rX-aozinIX5tVYBSea1nAyXYI4TJlije2_AF5_5aG3iAS7nlrgo0lk8" alt="bKash" className="h-8 w-auto" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <img src="https://5.imimg.com/data5/LZ/BV/ZZ/SELLER-78615388/trustpage-rtb-5-jpg-500x500.jpg" alt="bKash" className="h-8 w-auto" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-10 bg-white p-6 rounded-xl shadow-lg"> {/* Smaller padding, margin */}
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Customer Reviews</h2> {/* Smaller font, updated title */}
+
+          {/* Star Rating Input */}
+          <div className="mb-3 flex items-center"> {/* Smaller margin */}
+            <span className="font-semibold text-sm text-gray-700 mr-2">Rate this product:</span> {/* Smaller font */}
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-5 h-5 cursor-pointer transition-colors ${ // Smaller stars
+                  star <= userRating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                  }`}
+                onClick={() => handleRatingClick(star)}
+              />
+            ))}
+          </div>
+
+          {/* Review Textarea */}
+          <textarea
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 text-sm" // Smaller padding, margin
+            rows="3" // Fewer rows
+            placeholder="Write your review here..."
+            value={userReview}
+            onChange={(e) => setUserReview(e.target.value)}
+          ></textarea>
+
+          {/* Submit Review Button */}
+          <button
+            onClick={handleSubmitReview}
+            className="px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300" // Smaller button, text
+          >
+            Submit Review
+          </button>
+
+          <p className="mt-4 text-xs text-gray-600 text-center">No reviews yet. Be the first one to review !</p> {/* Smaller font */}
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <>
-
       // Added by Fahim ... ...
       // to show the signup page
       // the SignupPage is kept in another file named SignupPage
@@ -584,7 +796,6 @@ function App() {
           </div>
         </>
       )}
-
 
 
 
@@ -698,25 +909,31 @@ function App() {
                 )}
               </div>
 
-              <div className="
-                h-10 w-10 sm:h-12 sm:w-12
-                rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold
-                transition duration-300 ease-in-out
-                filter drop-shadow-md
-                hover:drop-shadow-[0_0_12px_rgba(59,130,246,0.8)]
-                hover:scale-110
-                cursor-pointer
-                select-none
-              ">
-                <img src={logo} alt="UrbanCart Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full" />
-              </div>
-              <span className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight select-none">
-                UrbanCart
-              </span>
+              {/* Logo and UrbanCart text - now clickable to go home */}
+              <button
+                onClick={() => { setCurrentPage('home'); setSelectedProduct(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                className="flex items-center space-x-2 sm:space-x-2 cursor-pointer group"
+                aria-label="Go to Home"
+              >
+                <div className="
+                  h-10 w-10 sm:h-12 sm:w-12
+                  rounded-full bg-blue-500 flex items-center justify-center text-white text-xl font-bold
+                  transition duration-300 ease-in-out
+                  filter drop-shadow-md
+                  group-hover:drop-shadow-[0_0_12px_rgba(59,130,246,0.8)]
+                  group-hover:scale-110
+                  select-none
+                ">
+                  <img src={logo} alt="UrbanCart Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full" />
+                </div>
+                <span className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight select-none group-hover:text-blue-600 transition duration-200">
+                  UrbanCart
+                </span>
+              </button>
             </div>
 
             {/* Search Bar - Positioned between brand and nav links */}
-            <div className="flex-grow mx-4 hidden md:block max-w-xl"> {/* Added max-w-xl for better control */}
+            <div className="flex-1 mx-4 hidden md:block">
               <div className="relative">
                 <input
                   type="text"
@@ -734,23 +951,39 @@ function App() {
             <div className="flex items-center space-x-6 lg:space-x-12">
               {/* Nav Links - Shown on medium and up */}
               <div className="hidden md:flex items-center space-x-6 lg:space-x-12">
-                {['Home', 'Shop', 'Deals', 'About', 'Contact'].map((item) => (
-                  <a
-                    key={item}
-                    href="#"
-                    className="
-                      text-gray-700
-                      hover:text-blue-600
-                      font-semibold
-                      transition
-                      duration-200
-                      select-none
-                      whitespace-nowrap
-                    "
-                  >
-                    {item}
-                  </a>
-                ))}
+                {/* Home link also navigates to home page */}
+                <button
+                  onClick={() => { setCurrentPage('home'); setSelectedProduct(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
+                >
+                  Home
+                </button>
+                <a
+                  href="#"
+                  className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
+                >
+                  Shop
+                </a>
+                <a
+                  href="#"
+                  className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
+                >
+                  Deals
+                </a>
+                {/* About link scrolls to "WE PROVIDE BEST FOOD" section */}
+                <button
+                  onClick={() => scrollToSection('about-section')}
+                  className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
+                >
+                  About
+                </button>
+                {/* Contact link scrolls to Footer */}
+                <button
+                  onClick={() => scrollToSection('footer-section')}
+                  className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
+                >
+                  Contact
+                </button>
               </div>
 
               {/* Cart Icon and Count */}
@@ -782,6 +1015,7 @@ function App() {
                     <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
                       Sign In
                     </button>
+                    {/* <button style={signupBtnStyle}> */}
                     <button style={signupBtnStyle} onClick={() => setShowSignupModal(true)}>
                       Sign Up
                     </button>
@@ -816,115 +1050,119 @@ function App() {
           </div>
         </nav>
 
-        {/* Main Content Area */}
-        <main className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 select-none leading-tight">
-            Welcome to UrbanCart
-          </h1>
-          <p className="mt-4 text-base sm:text-lg text-gray-600 select-none">
-            Your one-stop destination for all things amazing.
-          </p>
+        {/* Main Content Area - Conditional Rendering */}
+        {currentPage === 'home' ? (
+          <main className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 select-none leading-tight">
+              Welcome to UrbanCart
+            </h1>
+            <p className="mt-4 text-base sm:text-lg text-gray-600 select-none">
+              Your one-stop destination for all things amazing.
+            </p>
 
-          {/* Offers Slideshow */}
-          <div
-            className="relative w-full overflow-hidden rounded-xl shadow-lg mt-10"
-            onMouseEnter={() => setAutoplayPaused(true)}
-            onMouseLeave={() => setAutoplayPaused(false)}
-            style={{ aspectRatio: '3 / 1' }} // Maintain aspect ratio
-          >
-            {slides.map((slide, index) => (
-              <div
-                key={slide.id}
-                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                  }`}
-              >
-                <img src={slide.imageUrl} alt={slide.title} className="w-full h-full object-cover rounded-xl" />
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-center items-center text-white p-4 rounded-xl">
-                  <h2 className="text-3xl sm:text-5xl font-bold mb-2">{slide.title}</h2>
-                  <p className="text-lg sm:text-xl mb-4 max-w-2xl text-center">{slide.description}</p>
-                  <a href={slide.link} className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-                    Shop Now
-                  </a>
-                </div>
-              </div>
-            ))}
-
-            {/* Navigation Arrows */}
-            <button
-              onClick={goToPrevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75 transition z-20"
-              aria-label="Previous slide"
+            {/* Offers Slideshow */}
+            <div
+              className="relative w-full overflow-hidden rounded-xl shadow-lg mt-10"
+              onMouseEnter={() => setAutoplayPaused(true)}
+              onMouseLeave={() => setAutoplayPaused(false)}
+              style={{ aspectRatio: '3 / 1' }} // Maintain aspect ratio
             >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={goToNextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75 transition z-20"
-              aria-label="Next slide"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-
-            {/* Dots Navigation */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`w-3 h-3 rounded-full transition-colors ${index === currentSlide ? 'bg-white' : 'bg-gray-400 bg-opacity-75'
+              {slides.map((slide, index) => (
+                <div
+                  key={slide.id}
+                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
                     }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                ></button>
+                >
+                  <img src={slide.imageUrl} alt={`Slide ${slide.id}`} className="w-full h-full object-cover rounded-xl" /> {/* Alt text changed */}
+                  {/* Removed dynamic text overlay */}
+                </div>
+              ))}
+
+              {/* Navigation Arrows */}
+              <button
+                onClick={goToPrevSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75 transition z-20"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={goToNextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75 transition z-20"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+
+              {/* Dots Navigation */}
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-20">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-3 h-3 rounded-full transition-colors ${index === currentSlide ? 'bg-white' : 'bg-gray-400 bg-opacity-75'
+                      }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  ></button>
+                ))}
+              </div>
+            </div>
+
+            {/* Product Grid */}
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+              {/* Loading/Error States for Products - ADDED THESE AS PART OF DB INTEGRATION */}
+              {loadingProducts && <p className="text-gray-600 text-lg col-span-full">Loading products...</p>}
+              {productFetchError && <p className="text-red-500 text-lg col-span-full">Error loading products: {productFetchError}</p>}
+
+              {/* Display current category if selected */}
+              {/* Only show if products are not loading and no error */}
+              {!loadingProducts && !productFetchError && selectedCategory && (
+                <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">{selectedCategory}</h2>
+              )}
+
+              {/* Display message if no products found */}
+              {/* Only show if products are not loading, no error, and filtered list is empty */}
+              {!loadingProducts && !productFetchError && filteredProducts.length === 0 && (
+                <p className="text-gray-600 text-lg col-span-full">No products found matching your criteria.</p>
+              )}
+
+              {/* Dynamically render filtered product cards */}
+              {/* Only render products if not loading and no error */}
+              {!loadingProducts && !productFetchError && filteredProducts.map((product) => (
+                <div key={product.id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 w-full max-w-xs cursor-pointer"
+                  onClick={() => handleProductClick(product)} // Add onClick handler here
+                >
+                  <img
+                    src={product.imageUrl} // This now correctly uses the imageUrl from the fetched product data
+                    alt={product.name}
+                    className="rounded-lg mb-4 w-full h-40 object-cover"
+                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/200x150/cccccc/333333?text=Image+Error'; }}
+                  />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
+                  <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
+                    <span className="text-blue-600 font-bold text-lg"> ৳{product.price.toFixed(2)}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); addToCart(product); }} // Prevent product click when adding to cart
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-
-          {/* Product Grid */}
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
-            {/* Loading/Error States for Products - ADDED THESE AS PART OF DB INTEGRATION */}
-            {loadingProducts && <p className="text-gray-600 text-lg col-span-full">Loading products...</p>}
-            {productFetchError && <p className="text-red-500 text-lg col-span-full">Error loading products: {productFetchError}</p>}
-
-            {/* Display current category if selected */}
-            {/* Only show if products are not loading and no error */}
-            {!loadingProducts && !productFetchError && selectedCategory && (
-              <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">{selectedCategory}</h2>
-            )}
-
-            {/* Display message if no products found */}
-            {/* Only show if products are not loading, no error, and filtered list is empty */}
-            {!loadingProducts && !productFetchError && filteredProducts.length === 0 && (
-              <p className="text-gray-600 text-lg col-span-full">No products found matching your criteria.</p>
-            )}
-
-            {/* Dynamically render filtered product cards */}
-            {/* Only render products if not loading and no error */}
-            {!loadingProducts && !productFetchError && filteredProducts.map((product) => (
-              <div key={product.id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 w-full max-w-xs cursor-pointer">
-                <img
-                  src={product.imageUrl} // This now correctly uses the imageUrl from the fetched product data
-                  alt={product.name}
-                  className="rounded-lg mb-4 w-full h-40 object-cover"
-                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/200x150/cccccc/333333?text=Image+Error'; }}
-                />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
-                <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
-                  <span className="text-blue-600 font-bold text-lg"> ৳{product.price.toFixed(2)}</span>
-                  <button
-                    onClick={() => addToCart(product)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
+          </main>
+        ) : (
+          <ProductDetailPage
+            product={selectedProduct}
+            onBackClick={() => setCurrentPage('home')}
+            onAddToCart={addToCart}
+          />
+        )}
 
         {/* "WE PROVIDE BEST FOOD" Section - REVISED to match screenshot and fix image paths */}
-        <section className="py-16 bg-white">
+        <section id="about-section" className="py-16 bg-white"> {/* Added id for scrolling */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-extrabold text-gray-800 mb-4">WE PROVIDE BEST FOOD</h2>
@@ -1100,7 +1338,8 @@ function App() {
 
 
         {/* Footer */}
-        <footer className="bg-gray-800 text-white mt-16">
+        <footer id="footer-section" className="bg-gray-800 text-white mt-0"> {/* Added id for scrolling */}
+        {/* <footer className="bg-gray-800 text-white mt-16"> */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
             {/* Contact Section */}
             <div>
@@ -1110,6 +1349,7 @@ function App() {
                 <li>+8801881802111 (Fahim)</li>
                 <li>info@urbancart.com</li>
                 <li className="mt-4 font-bold">Corporate Address</li>
+                <li>Suhrawardy Hall, 507 no room</li>
                 <li>Suhrawardy Hall, 504 no room</li>
                 <li>   </li>
                 <li className="mt-4 font-bold">TRADE LICENSE NO</li>
@@ -1163,7 +1403,9 @@ function App() {
                 </a>
                 <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28-.466-.41-.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
                     <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28.466-.41.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
+
                   </svg>
                 </a>
                 <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
