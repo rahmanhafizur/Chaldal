@@ -11,10 +11,20 @@ const getProducts = async (req, res) => {
         // Column names adjusted to match your new schema: PRODUCT_NAME, UNIT_PRICE, PRODUCT_IMAGE, CATEGORY_ID, BRAND_ID
         // For 'category' name (e.g., "Fruits & Vegetables"), you'd typically JOIN with the CATEGORY table.
         // For simplicity, we'll return CATEGORY_ID and BRAND_ID directly, as indicated by the schema.
-        const sql = `SELECT P.PRODUCT_ID, P.PRODUCT_NAME, P.UNIT_PRICE, P.DESCRIPTION, P.PRODUCT_IMAGE, C.CATEGORY_NAME, P.BRAND_ID 
-                    FROM PRODUCT P JOIN CATEGORY C 
-                    ON P.CATEGORY_ID = C.CATEGORY_ID
-                    ORDER BY PRODUCT_ID`;
+        const sql = `SELECT
+                    P.PRODUCT_ID,
+                    P.PRODUCT_NAME,
+                    P.UNIT_PRICE,
+                    P.DESCRIPTION,
+                    P.PRODUCT_IMAGE,
+                    C.CATEGORY_NAME,
+                    (SELECT B.BRAND_NAME FROM BRAND B WHERE B.BRAND_ID = P.BRAND_ID) BRAND_NAME,
+                    (SELECT B.WEBSITE FROM BRAND B WHERE B.BRAND_ID = P.BRAND_ID) BRAND_NAME
+                    FROM
+                    PRODUCT P
+                    JOIN CATEGORY C ON P.CATEGORY_ID = C.CATEGORY_ID
+                    ORDER BY
+                    PRODUCT_ID`;
         const result = await connection.execute(sql);
 
         // Map the result to a friendly JSON format
@@ -26,7 +36,8 @@ const getProducts = async (req, res) => {
             description: row[3], // DESCRIPTION
             imageUrl: row[4],    // PRODUCT_IMAGE (mapped to imageUrl for frontend consistency)
             category: row[5],    // CATEGORY_ID (will be the ID, not the name, without a JOIN)
-            brandId: row[6]      // BRAND_ID (will be the ID, not the name, without a JOIN)
+            brandName: row[6],   // BRAND_ID (will be the ID, not the name, without a JOIN)
+            brandSite: row[7]    // BRAND WEBSITE
         }));
 
         res.json(products); // Send the products as a JSON response

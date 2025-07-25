@@ -9,6 +9,7 @@ const path = require('path'); // Import the 'path' module to work with file path
 
 const db = require('./config/db'); // Path is relative from app.js to config
 const productRoutes = require('./routes/products'); // Path is relative from app.js to routes
+const signInRoutes = require('./routes/signIn');
 
 const app = express();
 const PORT = process.env.PORT || 5000; // Use port from .env or default to 5000
@@ -19,6 +20,7 @@ app.use(bodyParser.json()); // Parse JSON request bodies
 
 // API Routes - These should come before static file serving to prioritize API calls
 app.use('/api/products', productRoutes); // Products API endpoint
+app.use('/api/auth', signInRoutes);
 
 // --- NEW ADDITIONS TO SERVE REACT FRONTEND ---
 // This middleware serves static files from the 'build' directory of your React app.

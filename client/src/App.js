@@ -619,7 +619,7 @@ function App() {
             </div>
 
             {/* Search Bar - Positioned between brand and nav links */}
-            <div className="flex-grow mx-4 hidden md:block max-w-xl"> {/* Added max-w-xl for better control */}
+            <div className="flex-1 mx-4 hidden md:block">
               <div className="relative">
                 <input
                   type="text"
@@ -1022,7 +1022,7 @@ function App() {
 
 
         {/* Footer */}
-        <footer id="footer-section" className="bg-gray-800 text-white mt-16"> {/* Added id for scrolling */}
+        <footer id="footer-section" className="bg-gray-800 text-white mt-0"> {/* Added id for scrolling */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
             {/* Contact Section */}
             <div>
