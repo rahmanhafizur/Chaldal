@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star } from 'lucide-react'; // Added Star icon
 
+
+import SignupPage from './SignupPage';
+
 const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
@@ -13,24 +16,126 @@ function App() {
 
   // state for managing the sign in page
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [user, setUser] = useState('');
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [customerId, setCustomerId] = useState('');
+  const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
 
   const handleSignInClick = () => {
     setShowLoginModal(true);
   };
 
-  const handleLogin = (username, password) => {
-    if (username === 'Fahim' && password === '1234') {
-      setUser(username);
-      setUserBool(true);
-      setShowLoginModal(false);
+  // State for managing the cart
+  const [cartItems, setCartItems] = useState([]);
+  const [showCartModal, setShowCartModal] = useState(false);
+
+  // State for products fetched from the backend (moved up for broader access)
+  const [products, setProducts] = useState([]); // This will now store fetched products
+  const [loadingProducts, setLoadingProducts] = useState(true); // To show loading indicator
+  const [productFetchError, setProductFetchError] = useState(null); // To handle fetch errors
+
+
+  // Added by Fahim
+  // Merging the cart items after signIn
+  // This function now explicitly takes the customerId and the current local cart items
+  const mergeCartItems = async(currentCustomerId) => {
+    if (currentCustomerId) { // Ensure we have a customerId to proceed
+      console.log('check1: Merging cart items for user:', currentCustomerId);
+      try {
+        // 1. Fetch the user's existing cart from the backend
+        const response = await fetch('http://localhost:5000/api/getCartItems', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: currentCustomerId, // Use the passed customerId
+          }),
+        });
+
+        const backendCartData = await response.json();
+
+        if (response.ok) {
+          console.log('Got backend cart items successfully:', backendCartData.message);
+
+          setCartItems(backendCartData);
+
+        } else {
+          console.error('Failed to fetch cart items from backend:', backendCartData.message || 'Unknown error');
+          alert('Failed to fetch cart items: ' + (backendCartData.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error fetching/merging cart items:', error);
+        alert('Network error fetching/merging cart items. Please try again.');
+      }
     } else {
-      console.log('Invalid credentials');
+      console.log('User not logged in. Cannot merge cart items.');
+    }
+  }
+
+
+
+
+  // Added by Fahim ... ...
+  // MODIFIED: handleLogin function to make an API call to the backend
+  const handleLogin = async (username, password) => { // Make this function async
+    try {
+      // Data to be sent to the backend
+      const loginData = {
+        username: username, // This will be matched against CUSTOMER_EMAIL or CUSTOMER_NAME
+        password: password,
+      };
+
+      // Make the POST request to your backend's sign-in endpoint
+      // Ensure this URL matches your backend server's address and port
+      const response = await fetch('http://localhost:5000/api/auth/signIn', {
+        method: 'POST', // HTTP method is POST
+        headers: {
+          'Content-Type': 'application/json', // Inform the server that the body is JSON
+        },
+        body: JSON.stringify(loginData), // Convert JS object to JSON string
+      });
+
+      const data = await response.json(); // Parse the JSON response from the server
+
+      if (response.ok) { // Check if the HTTP status is 2xx (success)
+        console.log('Sign-in successful:', data.message);
+        // Update client-side state with user info received from the backend
+        setCustomerId(data.user.id);
+        setUsername(data.user.username); // Using data.user.name as the display name
+        setUserBool(true); // Set user as logged in
+        setShowLoginModal(false); // Close the login modal
+
+        mergeCartItems(data.user.id)
+
+        // IMPORTANT: In a real application, if your backend sends a JWT,
+        // you would store it here (e.g., in localStorage) for future authenticated requests.
+        // Example: localStorage.setItem('authToken', data.token);
+
+        // alert('Sign-in successful! Welcome, ' + data.user.name); // Provide user feedback
+      } else {
+        // Handle server-side errors (e.g., 401 Invalid credentials, 400 missing fields)
+        console.error('Sign-in failed:', data.message || 'Unknown error');
+        alert('Sign-in failed: ' + (data.message || 'Please check your credentials.'));
+      }
+    } catch (error) {
+      // Handle network errors or issues with the fetch operation itself
+      console.error('Network error during sign-in:', error);
+      alert('An error occurred during sign-in. Please try again later.');
     }
     console.log('Logging in:', username);
     console.log('status: ', userBool);
   };
+
+
+  // Added by Fahim ... ...
+  // NEW FUNCTION: Handles click on "Sign In" from the signup modal
+  const handleSignInFromSignup = () => {
+    setShowSignupModal(false); // Close the signup modal
+    setShowLoginModal(true);    // Open the login modal
+  };
+
+
 
   const headerStyle = {
     display: "flex",
@@ -114,19 +219,10 @@ function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [autoplayPaused, setAutoplayPaused] = useState(false);
 
-  // State for managing the cart
-  const [cartItems, setCartItems] = useState([]);
-  const [showCartModal, setShowCartModal] = useState(false);
-
   // State for search functionality
   const [searchTerm, setSearchTerm] = useState('');
 
   // ---------- DATABASE INTEGRATION CHANGES START HERE ----------
-  // State for products fetched from the backend
-  const [products, setProducts] = useState([]); // This will now store fetched products
-  const [loadingProducts, setLoadingProducts] = useState(true); // To show loading indicator
-  const [productFetchError, setProductFetchError] = useState(null); // To handle fetch errors
-
   // Effect for fetching products from backend
   useEffect(() => {
     const fetchProducts = async () => {
@@ -227,30 +323,198 @@ function App() {
     }
   };
 
+  // // Cart Functions
+  // const addToCart = (product) => {
+  //   setCartItems((prevItems) => {
+  //     const existingItem = prevItems.find((item) => item.id === product.id);
+  //     if (existingItem) {
+  //       return prevItems.map((item) =>
+  //         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+  //       );
+  //     } else {
+  //       return [...prevItems, { ...product, quantity: 1 }];
+  //     }
+  //   });
+  // };
+
+
+
+  // Added by Fahim ... ...
+  // cart function connecting to the database
   // Cart Functions
-  const addToCart = (product) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+  const addToCart = async (product) => {
+    // Calculate the new state and quantity BEFORE setting the state
+    const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
+    let newCartItems;
+    let newProductQuantity;
+
+    if(userBool && customerId) {
       if (existingItem) {
-        return prevItems.map((item) =>
+        newCartItems = cartItems.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
+        newProductQuantity = existingItem.quantity + 1; // Calculate based on existing item
       } else {
-        return [...prevItems, { ...product, quantity: 1 }];
+        newCartItems = [...cartItems, { ...product, quantity: 1 }];
+        newProductQuantity = 1; // New item starts with quantity 1
       }
-    });
+
+      // Now, update the local cartItems state
+      setCartItems(newCartItems);
+    }
+
+    // Check if the user is logged in
+    if (userBool && customerId) {
+      try {
+        console.log(`User ${customerId} adding product ${product.id}. New quantity: ${newProductQuantity}`);
+        // Make an API call to update the cart in the backend
+        const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId,
+            productId: product.id,
+            quantity: newProductQuantity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Backend cart updated successfully:', data.message);
+        } else {
+          console.error('Failed to update backend cart:', data.message || 'Unknown error');
+          // If backend update fails, revert the local state for consistency
+          setCartItems(cartItems); // Revert to the state before this addition
+          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error updating cart in backend:', error);
+        // If network error, revert the local state for consistency
+        setCartItems(cartItems); // Revert to the state before this addition
+        alert('Network error updating cart. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cart updated locally only.');
+      alert('Please Sign In');
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+
+  // const removeFromCart = async (productId) => {
+  //   setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  // };
+
+   const removeFromCart = async (product) => {
+    setCartItems((prevItems) => prevItems.filter((item) => item.id !== product.id));
+
+    const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
+    let newCartItems;
+    let newProductQuantity = 0;
+
+    // if (existingItem) {
+    //   newCartItems = cartItems.map((item) =>
+    //     item.id === product.id ? { ...item, quantity: item.quantity - 1 } : item
+    //   );
+    //   newProductQuantity = existingItem.quantity - 1; // Calculate based on existing item
+    // } else {
+    //   newCartItems = [...cartItems, { ...product, quantity: 0 }];
+    //   newProductQuantity = 0; // New item starts with quantity 1
+    // }
+
+    // Now, update the local cartItems state
+    // setCartItems(newCartItems);
+
+    // Check if the user is logged in
+    if (userBool && customerId) {
+      try {
+        console.log(`User ${customerId} adding product ${product.id}. New quantity: ${newProductQuantity}`);
+        // Make an API call to update the cart in the backend
+        const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId,
+            productId: product.id,
+            quantity: newProductQuantity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Backend cart updated successfully:', data.message);
+        } else {
+          console.error('Failed to update backend cart:', data.message || 'Unknown error');
+          // If backend update fails, revert the local state for consistency
+          setCartItems(cartItems); // Revert to the state before this addition
+          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error updating cart in backend:', error);
+        // If network error, revert the local state for consistency
+        setCartItems(cartItems); // Revert to the state before this addition
+        alert('Network error updating cart. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cart updated locally only.');
+    }
+
   };
 
-  const updateCartQuantity = (productId, newQuantity) => {
+  // Modified updateCartQuantity to accept an optional customerId
+  const updateCartQuantity = async (productId, newProductQuantity) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
+        item.id === productId ? { ...item, quantity: Math.max(1, newProductQuantity) } : item
       )
     );
+
+    // The userBool and customerId here will be from the latest render cycle
+    // which should be updated after a successful login and subsequent re-render.
+    console.log(`userBool: ${userBool}, customerId: ${customerId}, username: ${username} in updateCartQuantity`);
+    
+    // Only proceed with backend update if a customerId is available
+    if (customerId) {
+      try {
+        console.log(`User ${customerId} updating product ${productId}. New quantity: ${newProductQuantity}`);
+        newProductQuantity = Math.max(1, newProductQuantity);
+        // Make an API call to update the cart in the backend
+        const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId, // Use the determined customerId
+            productId: productId,
+            quantity: newProductQuantity,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Backend cart updated successfully:', data.message);
+        } else {
+          console.error('Failed to update backend cart:', data.message || 'Unknown error');
+          // If backend update fails, revert the local state for consistency
+          setCartItems(cartItems); // Revert to the state before this addition
+          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error updating cart in backend:', error);
+        // If network error, revert the local state for consistency
+        setCartItems(cartItems); // Revert to the state before this addition
+        alert('Network error updating cart. Please try again.');
+      }
+    } else {
+      console.log('User not logged in. Cart updated locally only.');
+    }
   };
 
   const getCartTotal = () => {
@@ -485,6 +749,56 @@ function App() {
 
   return (
     <>
+      // Added by Fahim ... ...
+      // to show the signup page
+      // the SignupPage is kept in another file named SignupPage
+      {/* show signup page */}
+      {showSignupModal && ( // <--- ADD THIS CONDITIONAL RENDERING BLOCK
+        <>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
+            <div className="modal-overlay" style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <div className="modal-box" style={{
+                background: 'white',
+                padding: 20,
+                borderRadius: 8,
+                minWidth: 300,
+                position: 'relative',
+                maxHeight: '90vh', // Limit height to 90% of viewport height
+                overflowY: 'auto', // Enable vertical scrolling
+              }}>
+                <button onClick={() => setShowSignupModal(false)}
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: 18,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✕
+                </button>
+                {/* Render the SignupPage component here */}
+                <SignupPage
+                  onClose={() => setShowSignupModal(false)}
+                  onSignInClick={handleSignInFromSignup} // <--- NEW PROP PASSED HERE
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+
+
       {/* show login page */}
       {showLoginModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -686,10 +1000,12 @@ function App() {
               <header style={headerStyle}>
                 {userBool ? (
                   <div style={signedIn}>
-                    <div style={avatarStyle}>{user[0].toUpperCase()}</div>
+                    <div style={avatarStyle}>{username[0].toUpperCase()}</div>
                     <button style={logoutBtnStyle} onClick={() => {
-                      setUser("");
+                      setCustomerId("");
+                      setUsername("");
                       setUserBool(false);
+                      setCartItems([]);
                     }}>
                       Sign Out
                     </button>
@@ -699,7 +1015,8 @@ function App() {
                     <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
                       Sign In
                     </button>
-                    <button style={signupBtnStyle}>
+                    {/* <button style={signupBtnStyle}> */}
+                    <button style={signupBtnStyle} onClick={() => setShowSignupModal(true)}>
                       Sign Up
                     </button>
                   </div>
@@ -843,7 +1160,6 @@ function App() {
             onAddToCart={addToCart}
           />
         )}
-
 
         {/* "WE PROVIDE BEST FOOD" Section - REVISED to match screenshot and fix image paths */}
         <section id="about-section" className="py-16 bg-white"> {/* Added id for scrolling */}
@@ -997,7 +1313,7 @@ function App() {
                             +
                           </button>
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item)}
                             className="text-red-500 hover:text-red-700 transition"
                             aria-label={`Remove ${item.name}`}
                           >
@@ -1023,6 +1339,7 @@ function App() {
 
         {/* Footer */}
         <footer id="footer-section" className="bg-gray-800 text-white mt-0"> {/* Added id for scrolling */}
+        {/* <footer className="bg-gray-800 text-white mt-16"> */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
             {/* Contact Section */}
             <div>
@@ -1033,6 +1350,7 @@ function App() {
                 <li>info@urbancart.com</li>
                 <li className="mt-4 font-bold">Corporate Address</li>
                 <li>Suhrawardy Hall, 507 no room</li>
+                <li>Suhrawardy Hall, 504 no room</li>
                 <li>   </li>
                 <li className="mt-4 font-bold">TRADE LICENSE NO</li>
                 <li>TRAD/DNCC/145647/2025</li>
@@ -1086,6 +1404,8 @@ function App() {
                 <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
                     <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28-.466-.41-.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
+                    <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28.466-.41.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
+
                   </svg>
                 </a>
                 <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">

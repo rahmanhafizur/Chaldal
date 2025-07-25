@@ -1,9 +1,6 @@
-// CHALDAL/client/src/SignupPage.js
 import React, { useState } from 'react';
 
-// Renamed from App to SignupPage to avoid conflicts
-const SignupPage = ({ onClose }) => { // Accept onClose prop
-  // State variables for each input field
+const SignupPage = ({ onClose, onSignInClick }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -11,12 +8,11 @@ const SignupPage = ({ onClose }) => { // Accept onClose prop
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [signupMessage, setSignupMessage] = useState(''); // New state for signup messages
 
-  // Function to handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+  const handleSubmit = async (e) => { // Make this function async
+    e.preventDefault();
 
-    // Basic client-side password confirmation
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match.");
       return;
@@ -24,26 +20,46 @@ const SignupPage = ({ onClose }) => { // Accept onClose prop
       setPasswordError("");
     }
 
-    // For now, just log the collected data to the console.
-    // You will integrate this with your backend API later.
-    console.log('Signup Data:', {
-      name,
-      phone,
-      email,
-      username,
-      password, // In a real app, never send plain password directly to backend without hashing
-    });
+    setSignupMessage('Signing up...'); // Show a loading message
 
-    // You can add a success message or clear the form here if needed
-    alert('Signup data collected. Check console for details. (Backend integration pending)');
-    // Optionally clear form fields after submission
-    setName('');
-    setPhone('');
-    setEmail('');
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
-    onClose(); // Close the modal after successful submission (or handle error)
+    try {
+      const signupData = {
+        name,
+        phone,
+        email,
+        username,
+        password, // Send plain password to backend for hashing
+      };
+
+      // Make the POST request to your backend's signup endpoint
+      // Ensure this URL matches your backend server's address and port
+      // We'll use /api/auth/signup as the endpoint
+      const response = await fetch('http://localhost:5000/api/auth/signUp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(signupData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) { // Status 2xx
+        setSignupMessage('Signup successful! You can now sign in.');
+        alert('Signup successful! You can now sign in.');
+        // Optionally, automatically switch to login modal after successful signup
+        onClose(); // Close signup modal
+        onSignInClick(); // Open login modal
+      } else {
+        // Handle server-side errors (e.g., username/email already exists, validation errors)
+        setSignupMessage(`Signup failed: ${data.message || 'Unknown error'}`);
+        alert(`Signup failed: ${data.message || 'Please try again.'}`);
+      }
+    } catch (error) {
+      console.error('Network error during signup:', error);
+      setSignupMessage('An error occurred during signup. Please try again later.');
+      alert('An error occurred during signup. Please try again later.');
+    }
   };
 
   return (
@@ -75,7 +91,7 @@ const SignupPage = ({ onClose }) => { // Accept onClose prop
               Phone Number
             </label>
             <input
-              type="tel" // Use type="tel" for phone numbers
+              type="tel"
               id="phone"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
               placeholder="+8801XXXXXXXXX"
@@ -153,6 +169,12 @@ const SignupPage = ({ onClose }) => { // Accept onClose prop
             )}
           </div>
 
+          {signupMessage && ( // Display signup message
+            <p className={`text-center text-sm ${signupMessage.includes('failed') ? 'text-red-600' : 'text-green-600'}`}>
+              {signupMessage}
+            </p>
+          )}
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -164,13 +186,18 @@ const SignupPage = ({ onClose }) => { // Accept onClose prop
 
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{' '}
-          <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+          <button
+            type="button"
+            onClick={onSignInClick}
+            className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+            style={{ textDecoration: 'underline' }}
+          >
             Sign In
-          </a>
+          </button>
         </p>
       </div>
     </div>
   );
 };
 
-export default SignupPage; // Export as SignupPage
+export default SignupPage;

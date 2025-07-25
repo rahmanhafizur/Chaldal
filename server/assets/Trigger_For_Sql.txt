@@ -1,0 +1,56 @@
+-- ============================================
+-- This trigger will automatically create a new
+-- row in the cart table whenever a new customer
+-- is added.
+
+CREATE
+OR REPLACE TRIGGER CREATING_NEW_CART AFTER INSERT ON CUSTOMER FOR EACH ROW
+DECLARE
+USER_ID NUMBER;
+BEGIN
+    USER_ID := : NEW.CUSTOMER_ID;
+    INSERT INTO CART (CUSTOMER_ID)
+    VALUES
+    (USER_ID);
+END;
+/
+
+
+-- ==========================================================
+-- This trigger will be called when a new update or insertion
+-- is made in the cart_item table. The trigger will calculate
+-- the total price and set to the total_price
+
+CREATE OR REPLACE TRIGGER SET_CART_TOTAL_PRICE
+BEFORE INSERT OR UPDATE 
+ON CART_ITEM 
+FOR EACH ROW 
+DECLARE 
+  P_ID NUMBER;
+  PRICE_UNIT NUMBER;
+  PRICE_TOTAL NUMBER;
+  QUANTITY NUMBER;
+  C_ID NUMBER;
+BEGIN 
+  DBMS_OUTPUT.PUT_LINE('HELLO');
+
+  P_ID := :NEW.PRODUCT_ID;
+  QUANTITY := :NEW.QUANTITY;
+  C_ID := :NEW.CART_ID;
+  
+  SELECT UNIT_PRICE INTO PRICE_UNIT
+  FROM PRODUCT 
+  WHERE PRODUCT_ID = P_ID;
+  
+  PRICE_TOTAL := (QUANTITY * PRICE_UNIT);
+  
+  :NEW.TOTAL_PRICE := PRICE_TOTAL;
+  
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Product ID ' || :NEW.PRODUCT_ID || ' not found in PRODUCT table.');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002, 'An unexpected error occurred: ' || SQLERRM);
+
+END;
+/

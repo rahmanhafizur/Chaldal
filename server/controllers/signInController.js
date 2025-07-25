@@ -4,8 +4,6 @@ const bcrypt = require('bcryptjs'); // You'll need to install this library for p
 
 const signIn = async (req, res) => {
 
-    
-
     let connection;
     try {
         // 1. Get username and password from the request body
