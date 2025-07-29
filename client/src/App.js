@@ -22,10 +22,8 @@ function App() {
   const [userBool, setUserBool] = useState(false);
   // New state for user role: 'guest', 'customer', 'admin'
   const [userRole, setUserRole] = useState('guest'); // Default to guest
-
-  const handleSignInClick = () => {
-    setShowLoginModal(true);
-  };
+  
+  const [customerDetails, setCustomerDetails] = useState(null);
 
   // State for managing the cart
   const [cartItems, setCartItems] = useState([]);
@@ -1937,6 +1935,8 @@ const UserProfilePage = ({ customerId, username, onBackClick }) => {
       <nav className="text-xs text-gray-500 mb-6">
         <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Your Profile</span>
       </nav>
+
+
 
       <div className="bg-white p-8 rounded-xl shadow-lg">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Profile</h2>
