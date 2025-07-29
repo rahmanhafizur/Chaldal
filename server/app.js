@@ -9,6 +9,8 @@ const path = require('path'); // Import the 'path' module to work with file path
 
 const db = require('./config/db'); // Path is relative from app.js to config
 const productRoutes = require('./routes/products'); // Path is relative from app.js to routes
+const categoriesRoutes = require('./routes/categories');
+
 const signInRoutes = require('./routes/signIn');
 const signUpRoutes = require('./routes/signUp');
 const cartUpdateRoutes = require('./routes/cartUpdate');
@@ -22,7 +24,9 @@ app.use(cors()); // Enable CORS for all routes (important for frontend communica
 app.use(bodyParser.json()); // Parse JSON request bodies
 
 // API Routes - These should come before static file serving to prioritize API calls
-app.use('/api/products', productRoutes); // Products API endpoint
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoriesRoutes);
+
 app.use('/api/auth', signInRoutes);
 app.use('/api/auth', signUpRoutes);
 app.use('/api/cartUpdate', cartUpdateRoutes);
