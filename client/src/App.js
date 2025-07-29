@@ -20,10 +20,8 @@ function App() {
   const [customerId, setCustomerId] = useState('');
   const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
+  const [adminBool, setAdminBool] = useState(false);
 
-  const handleSignInClick = () => {
-    setShowLoginModal(true);
-  };
 
   // State for managing the cart
   const [cartItems, setCartItems] = useState([]);
@@ -108,9 +106,12 @@ function App() {
 
         mergeCartItems(data.user.id)
 
-        // IMPORTANT: In a real application, if your backend sends a JWT,
-        // you would store it here (e.g., in localStorage) for future authenticated requests.
-        // Example: localStorage.setItem('authToken', data.token);
+        console.log('The user is a/an ' + data.user.status);
+
+        // this will check a user if he/she is an admin or not
+        if(data.user.status == 'admin') {
+          setAdminBool(true);
+        }
 
         // alert('Sign-in successful! Welcome, ' + data.user.name); // Provide user feedback
       } else {

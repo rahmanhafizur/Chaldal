@@ -56,7 +56,8 @@ const signIn = async (req, res) => {
             name: customerData[2],              // CUSTOMER_NAME
             phone: customerData[3],             // CUSTOMER_PHONE
             email: customerData[4],             // CUSTOMER_EMAIL
-            hashPassword: customerData[5]     // CUSTOMER_PASSWORD (this should be the hashed password from DB)
+            hashPassword: customerData[5],      // CUSTOMER_PASSWORD (this should be the hashed password from DB)
+            status: 'customer'
         };
 
         // 5. Compare the provided plain-text password with the hashed password from the database
@@ -67,6 +68,21 @@ const signIn = async (req, res) => {
             // Passwords do not match, return an error. Again, use a generic message.
             return res.status(401).json({ message: 'Invalid username or password.' });
         }
+
+
+        const sql2 = `SELECT
+                      *
+                    FROM
+                      ADMIN
+                    WHERE
+                      CUSTOMER_ID = :identifier`;
+
+        const result2 = await connection.execute(sql2, { identifier: customerData[0] });
+
+        if (result2.rows.length !== 0) {
+            user.status = 'admin';
+        }
+
 
         // 6. If username and password are valid (match found and hash confirmed)
         // Send a success response back to the client.
@@ -80,7 +96,8 @@ const signIn = async (req, res) => {
                 username: user.username,
                 name: user.name,
                 email: user.email,
-                phone: user.phone // Include any other non-sensitive user data you want the client to have
+                phone: user.phone,
+                status: user.status
             },
             // Example of where a JWT would be sent:
             // token: 'YOUR_GENERATED_JWT_HERE'
