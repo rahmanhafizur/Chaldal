@@ -27,11 +27,7 @@ function App() {
   const [userRole, setUserRole] = useState('guest'); // Default to guest
 
   // New state for storing full user profile details
-  const [userProfileData, setUserProfileData] = useState({
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-  });
+  const [userProfileData, setUserProfileData] = useState(null);
 
 
   // State for managing the cart
@@ -136,11 +132,9 @@ function App() {
         }
 
         // Update user profile data from login response if available
-        setUserProfileData({
-          customerName: data.user.customerName || '',
-          customerPhone: data.user.customerPhone || '',
-          customerEmail: data.user.customerEmail || '',
-        });
+        setUserProfileData(data.user);
+
+        console.log(data.user.email + ': Who is the bug????');
 
         mergeCartItems(data.user.id)
 
@@ -381,6 +375,10 @@ function App() {
 
   // Cart Functions
   const addToCart = async (product) => {
+    if(adminBool) {
+      return;
+    }
+
     const existingItem = cartItems.find((item) => item.id === product.id);
     let newProductQuantity;
 
@@ -438,6 +436,10 @@ function App() {
 
 
   const removeFromCart = async (product) => {
+    if(adminBool) {
+      return;
+    }
+
     // Optimistically update local state
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== product.id));
 
@@ -473,6 +475,10 @@ function App() {
   };
 
   const updateCartQuantity = async (productId, newProductQuantity) => {
+    if(adminBool) {
+      return;
+    }
+
     const existingItem = cartItems.find((item) => item.id === productId);
     const quantityToUpdate = Math.max(0, newProductQuantity); // Ensure quantity is not negative
 
@@ -1954,9 +1960,9 @@ const SignupPage = ({ onClose, onSignInClick }) => {
 const UserProfilePage = ({ customerId, username, userProfileData, setUserProfileData, onBackClick }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    customerName: userProfileData.customerName,
-    customerPhone: userProfileData.customerPhone,
-    customerEmail: userProfileData.customerEmail,
+    name: userProfileData.name,
+    phone: userProfileData.phone,
+    email: userProfileData.email,
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: '',
@@ -1967,9 +1973,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
   useEffect(() => {
     setEditForm(prevForm => ({
       ...prevForm,
-      customerName: userProfileData.customerName,
-      customerPhone: userProfileData.customerPhone,
-      customerEmail: userProfileData.customerEmail,
+      name: userProfileData.name,
+      phone: userProfileData.phone,
+      email: userProfileData.email,
     }));
   }, [userProfileData]);
 
@@ -2006,9 +2012,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: customerId,
-          customerName: editForm.customerName,
-          customerPhone: editForm.customerPhone,
-          customerEmail: editForm.customerEmail,
+          name: editForm.name,
+          phone: editForm.phone,
+          email: editForm.email,
         }),
       });
 
@@ -2039,9 +2045,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
 
       // Update local state with new profile data
       setUserProfileData({
-        customerName: editForm.customerName,
-        customerPhone: editForm.customerPhone,
-        customerEmail: editForm.customerEmail,
+        name: editForm.name,
+        phone: editForm.phone,
+        email: editForm.email,
       });
 
       setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
@@ -2079,13 +2085,13 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
                   <span className="font-semibold">Username:</span> {username}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Customer Name:</span> {userProfileData.customerName || 'N/A'}
+                  <span className="font-semibold">Customer Name:</span> {userProfileData.name}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Phone:</span> {userProfileData.customerPhone || 'N/A'}
+                  <span className="font-semibold">Phone:</span> {userProfileData.phone}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Email:</span> {userProfileData.customerEmail || 'N/A'}
+                  <span className="font-semibold">Email:</span> {userProfileData.email}
                 </p>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -2098,34 +2104,34 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
             ) : (
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div>
-                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Customer Name</label>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Customer Name</label>
                   <input
                     type="text"
-                    id="customerName"
-                    name="customerName"
-                    value={editForm.customerName}
+                    id="name"
+                    name="name"
+                    value={editForm.name}
                     onChange={handleEditChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700">Phone</label>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
                   <input
                     type="text"
-                    id="customerPhone"
-                    name="customerPhone"
-                    value={editForm.customerPhone}
+                    id="phone"
+                    name="phone"
+                    value={editForm.phone}
                     onChange={handleEditChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700">Email</label>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
-                    id="customerEmail"
-                    name="customerEmail"
-                    value={editForm.customerEmail}
+                    id="email"
+                    name="email"
+                    value={editForm.email}
                     onChange={handleEditChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -2174,9 +2180,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
                     onClick={() => {
                       setIsEditing(false);
                       setEditForm({ // Reset form to current profile data
-                        customerName: userProfileData.customerName,
-                        customerPhone: userProfileData.customerPhone,
-                        customerEmail: userProfileData.customerEmail,
+                        name: userProfileData.name,
+                        phone: userProfileData.phone,
+                        email: userProfileData.email,
                         currentPassword: '',
                         newPassword: '',
                         confirmNewPassword: '',
