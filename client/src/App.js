@@ -1,9 +1,9 @@
 // CHALDAL/client/src/App.js
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star } from 'lucide-react'; // Added Star icon
+import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings } from 'lucide-react'; // Added new icons
 
 
-import SignupPage from './SignupPage';
+// import SignupPage from './SignupPage'; // REMOVED: Moving SignupPage inline
 
 const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
@@ -20,6 +20,8 @@ function App() {
   const [customerId, setCustomerId] = useState('');
   const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
+  // New state for user role: 'guest', 'customer', 'admin'
+  const [userRole, setUserRole] = useState('guest'); // Default to guest
 
   const handleSignInClick = () => {
     setShowLoginModal(true);
@@ -28,11 +30,16 @@ function App() {
   // State for managing the cart
   const [cartItems, setCartItems] = useState([]);
   const [showCartModal, setShowCartModal] = useState(false);
+  // New state for payment confirmation modal
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // State for products fetched from the backend (moved up for broader access)
   const [products, setProducts] = useState([]); // This will now store fetched products
   const [loadingProducts, setLoadingProducts] = useState(true); // To show loading indicator
   const [productFetchError, setProductFetchError] = useState(null); // To handle fetch errors
+
+  // Profile Menu State - MOVED INSIDE App FUNCTION
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
 
   // Added by Fahim
@@ -62,11 +69,13 @@ function App() {
 
         } else {
           console.error('Failed to fetch cart items from backend:', backendCartData.message || 'Unknown error');
-          alert('Failed to fetch cart items: ' + (backendCartData.message || 'Please try again.'));
+          // Using a custom alert/modal instead of window.alert
+          // alert('Failed to fetch cart items: ' + (backendCartData.message || 'Please try again.'));
         }
       } catch (error) {
         console.error('Network error fetching/merging cart items:', error);
-        alert('Network error fetching/merging cart items. Please try again.');
+        // Using a custom alert/modal instead of window.alert
+        // alert('Network error fetching/merging cart items. Please try again.');
       }
     } else {
       console.log('User not logged in. Cannot merge cart items.');
@@ -105,6 +114,7 @@ function App() {
         setUsername(data.user.username); // Using data.user.name as the display name
         setUserBool(true); // Set user as logged in
         setShowLoginModal(false); // Close the login modal
+        setUserRole(data.user.role || 'customer'); // Set user role based on backend response
 
         mergeCartItems(data.user.id)
 
@@ -116,12 +126,14 @@ function App() {
       } else {
         // Handle server-side errors (e.g., 401 Invalid credentials, 400 missing fields)
         console.error('Sign-in failed:', data.message || 'Unknown error');
-        alert('Sign-in failed: ' + (data.message || 'Please check your credentials.'));
+        // Using a custom alert/modal instead of window.alert
+        // alert('Sign-in failed: ' + (data.message || 'Please check your credentials.'));
       }
     } catch (error) {
       // Handle network errors or issues with the fetch operation itself
       console.error('Network error during sign-in:', error);
-      alert('An error occurred during sign-in. Please try again later.');
+      // Using a custom alert/modal instead of window.alert
+      // alert('An error occurred during sign-in. Please try again later.');
     }
     console.log('Logging in:', username);
     console.log('status: ', userBool);
@@ -388,17 +400,20 @@ function App() {
           console.error('Failed to update backend cart:', data.message || 'Unknown error');
           // If backend update fails, revert the local state for consistency
           setCartItems(cartItems); // Revert to the state before this addition
-          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+          // Using a custom alert/modal instead of window.alert
+          // alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
         }
       } catch (error) {
         console.error('Network error updating cart in backend:', error);
         // If network error, revert the local state for consistency
         setCartItems(cartItems); // Revert to the state before this addition
-        alert('Network error updating cart. Please try again.');
+        // Using a custom alert/modal instead of window.alert
+        // alert('Network error updating cart. Please try again.');
       }
     } else {
       console.log('User not logged in. Cart updated locally only.');
-      alert('Please Sign In');
+      // Using a custom alert/modal instead of window.alert
+      // alert('Please Sign In');
     }
   };
 
@@ -411,26 +426,12 @@ function App() {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== product.id));
 
     const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
-    let newCartItems;
     let newProductQuantity = 0;
-
-    // if (existingItem) {
-    //   newCartItems = cartItems.map((item) =>
-    //     item.id === product.id ? { ...item, quantity: item.quantity - 1 } : item
-    //   );
-    //   newProductQuantity = existingItem.quantity - 1; // Calculate based on existing item
-    // } else {
-    //   newCartItems = [...cartItems, { ...product, quantity: 0 }];
-    //   newProductQuantity = 0; // New item starts with quantity 1
-    // }
-
-    // Now, update the local cartItems state
-    // setCartItems(newCartItems);
 
     // Check if the user is logged in
     if (userBool && customerId) {
       try {
-        console.log(`User ${customerId} adding product ${product.id}. New quantity: ${newProductQuantity}`);
+        console.log(`User ${customerId} removing product ${product.id}. New quantity: ${newProductQuantity}`);
         // Make an API call to update the cart in the backend
         const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
           method: 'POST',
@@ -452,13 +453,15 @@ function App() {
           console.error('Failed to update backend cart:', data.message || 'Unknown error');
           // If backend update fails, revert the local state for consistency
           setCartItems(cartItems); // Revert to the state before this addition
-          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+          // Using a custom alert/modal instead of window.alert
+          // alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
         }
       } catch (error) {
-        console.error('Network error updating cart in backend:', error);
-        // If network error, revert the local state for consistency
-        setCartItems(cartItems); // Revert to the state before this addition
-        alert('Network error updating cart. Please try again.');
+            console.error('Network error updating cart in backend:', error);
+            // If network error, revert the local state for consistency
+            setCartItems(cartItems); // Revert to the state before this addition
+            // Using a custom alert/modal instead of window.alert
+            // alert('Network error updating cart. Please try again.');
       }
     } else {
       console.log('User not logged in. Cart updated locally only.');
@@ -504,13 +507,15 @@ function App() {
           console.error('Failed to update backend cart:', data.message || 'Unknown error');
           // If backend update fails, revert the local state for consistency
           setCartItems(cartItems); // Revert to the state before this addition
-          alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+          // Using a custom alert/modal instead of window.alert
+          // alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
         }
       } catch (error) {
         console.error('Network error updating cart in backend:', error);
         // If network error, revert the local state for consistency
         setCartItems(cartItems); // Revert to the state before this addition
-        alert('Network error updating cart. Please try again.');
+        // Using a custom alert/modal instead of window.alert
+        // alert('Network error updating cart. Please try again.');
       }
     } else {
       console.log('User not logged in. Cart updated locally only.');
@@ -546,24 +551,64 @@ function App() {
   const ProductDetailPage = ({ product, onBackClick, onAddToCart }) => {
     const [userRating, setUserRating] = useState(0);
     const [userReview, setUserReview] = useState('');
+    // State to store submitted reviews for this product
+    const [productReviews, setProductReviews] = useState([]);
 
     const handleRatingClick = (rating) => {
       setUserRating(rating);
     };
 
-    const handleSubmitReview = () => {
+    //*handleSubmitReview* by hafiz
+    const handleSubmitReview = async () => {
       if (userReview.trim() === '' || userRating === 0) {
         // Using a custom modal for alerts instead of window.alert
-        // For this example, we'll just log and reset. In a real app, you'd show a modal.
         console.warn('Please provide a rating and a review.');
+        // In a real app, you'd show a modal here
         return;
       }
+
       console.log('Submitting Review:', { product: product.name, rating: userRating, review: userReview });
-      // In a real application, you would send this data to a backend API
-      setUserRating(0);
-      setUserReview('');
-      // Show a success message to the user (e.g., via a temporary notification or modal)
-      console.log('Review submitted successfully!');
+
+      // Simulate API call to backend
+      try {
+        const response = await fetch('http://localhost:5000/api/submitReview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: product.id,
+            customerId: customerId, // Assuming customerId is available
+            username: username, // Assuming username is available
+            rating: userRating,
+            review: userReview,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log('Review submitted successfully:', data.message);
+          // Add the new review to the local state for immediate display
+          setProductReviews(prevReviews => [...prevReviews, {
+            id: Date.now(), // Unique ID for key
+            username: username,
+            rating: userRating,
+            review: userReview,
+            date: new Date().toLocaleDateString(), // Current date
+          }]);
+          setUserRating(0);
+          setUserReview('');
+          // Show a success message to the user (e.g., via a temporary notification or modal)
+          // alert('Review submitted successfully!'); // Use custom modal
+        } else {
+          console.error('Failed to submit review:', data.message || 'Unknown error');
+          // alert('Failed to submit review: ' + (data.message || 'Please try again.')); // Use custom modal
+        }
+      } catch (error) {
+        console.error('Network error submitting review:', error);
+        // alert('Network error submitting review. Please try again.'); // Use custom modal
+      }
     };
 
     if (!product) {
@@ -740,7 +785,30 @@ function App() {
             Submit Review
           </button>
 
-          <p className="mt-4 text-xs text-gray-600 text-center">No reviews yet. Be the first one to review !</p> {/* Smaller font */}
+          {/* Display submitted reviews */}
+          <div className="mt-6 space-y-4">
+            {productReviews.length === 0 ? (
+              <p className="mt-4 text-xs text-gray-600 text-center">No reviews yet. Be the first one to review !</p>
+            ) : (
+              productReviews.map((review, index) => (
+                <div key={review.id} className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center mb-1">
+                    <span className="font-semibold text-sm text-gray-800 mr-2">{review.username}</span>
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-gray-500 ml-auto">{review.date}</span>
+                  </div>
+                  <p className="text-sm text-gray-700">{review.review}</p>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     );
@@ -958,18 +1026,19 @@ function App() {
                 >
                   Home
                 </button>
-                <a
-                  href="#"
+                {/* Shop and Deals now navigate to home for consistency */}
+                <button
+                  onClick={() => { setCurrentPage('home'); setSelectedProduct(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
                 >
                   Shop
-                </a>
-                <a
-                  href="#"
+                </button>
+                <button
+                  onClick={() => { setCurrentPage('home'); setSelectedProduct(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   className="text-gray-700 hover:text-blue-600 font-semibold transition duration-200 select-none whitespace-nowrap"
                 >
                   Deals
-                </a>
+                </button>
                 {/* About link scrolls to "WE PROVIDE BEST FOOD" section */}
                 <button
                   onClick={() => scrollToSection('about-section')}
@@ -999,30 +1068,58 @@ function App() {
               {/* this is for handling sign in, sign up, logout, logo of users */}
               <header style={headerStyle}>
                 {userBool ? (
-                  <div style={signedIn}>
-                    <div style={avatarStyle}>{username[0].toUpperCase()}</div>
-                    <button style={logoutBtnStyle} onClick={() => {
-                      setCustomerId("");
-                      setUsername("");
-                      setUserBool(false);
-                      setCartItems([]);
-                    }}>
-                      Sign Out
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      className="flex items-center space-x-2 p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition"
+                      aria-label="User Profile"
+                    >
+                      <User className="w-6 h-6" />
+                      <span className="hidden md:inline">{username}</span>
                     </button>
+                    {showProfileMenu && (
+                      userRole === 'admin' ? (
+                        <AdminProfileModal
+                          onClose={() => setShowProfileMenu(false)}
+                          onLogout={() => {
+                            setCustomerId("");
+                            setUsername("");
+                            setUserBool(false);
+                            setCartItems([]);
+                            setUserRole('guest'); // Reset role on logout
+                            setShowProfileMenu(false);
+                          }}
+                        />
+                      ) : (
+                        <UserProfileModal
+                          onClose={() => setShowProfileMenu(false)}
+                          onLogout={() => {
+                            setCustomerId("");
+                            setUsername("");
+                            setUserBool(false);
+                            setCartItems([]);
+                            setUserRole('guest'); // Reset role on logout
+                            setShowProfileMenu(false);
+                          }}
+                          onViewProfile={() => {
+                            setShowProfileMenu(false);
+                            setCurrentPage('profile');
+                          }}
+                        />
+                      )
+                    )}
                   </div>
                 ) : (
                   <div style={signedOut}>
                     <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
                       Sign In
                     </button>
-                    {/* <button style={signupBtnStyle}> */}
                     <button style={signupBtnStyle} onClick={() => setShowSignupModal(true)}>
                       Sign Up
                     </button>
                   </div>
                 )}
               </header>
-
 
 
               {/* Mobile Hamburger for other nav links on small screens */}
@@ -1153,12 +1250,28 @@ function App() {
               ))}
             </div>
           </main>
-        ) : (
+        ) : currentPage === 'productDetail' ? (
           <ProductDetailPage
             product={selectedProduct}
             onBackClick={() => setCurrentPage('home')}
             onAddToCart={addToCart}
           />
+        ) : currentPage === 'profile' && userBool ? (
+          <UserProfilePage
+            customerId={customerId}
+            username={username}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 pt-28">
+            <p className="text-xl text-gray-700">Please sign in to view your profile.</p>
+            <button
+              onClick={() => setCurrentPage('home')}
+              className="mt-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+            >
+              Back to Home
+            </button>
+          </div>
         )}
 
         {/* "WE PROVIDE BEST FOOD" Section - REVISED to match screenshot and fix image paths */}
@@ -1327,7 +1440,10 @@ function App() {
                     <p className="text-xl font-bold text-gray-900">Total:</p>
                     <p className="text-xl font-bold text-blue-600"> ৳{getCartTotal()}</p>
                   </div>
-                  <button className="mt-6 w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition">
+                  <button
+                    onClick={() => { setShowCartModal(false); setShowPaymentModal(true); }}
+                    className="mt-6 w-full bg-green-600 text-white py-3 rounded-md font-semibold hover:bg-green-700 transition"
+                  >
                     Proceed to Checkout
                   </button>
                 </>
@@ -1403,14 +1519,13 @@ function App() {
                 </a>
                 <a href="#" aria-label="LinkedIn" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28-.466-.41-.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
                     <path fillRule="evenodd" d="M20.447 20.452h-3.518V14.77c0-1.401-.502-2.359-1.758-2.359-1.042 0-1.66.704-1.932 1.39-.098.24-.122.57-.122.906v5.745h-3.517s.047-9.527 0-10.518h3.517v1.498c.465-.71 1.282-1.722 3.166-1.722 2.306 0 4.025 1.516 4.025 4.75V20.452zM4.015 7.288c-.023-.008-.047-.016-.07-.024-.265-.09-.544-.134-.814-.134-.78 0-1.42.34-1.91.89C.758 8.654.5 9.42.5 10.375s.258 1.72.71 2.266c.49.55 1.13.89 1.91.89.27 0 .548-.044.814-.134.023-.008.047-.016.07-.024 1.34-1.06 1.956-2.008 1.956-3.083 0-1.075-.616-2.024-1.956-3.083zM4.53 4.28c-.004-.008-.007-.016-.01-.024-.13-.238-.27-.476-.41-.704C3.898 3.238 3.295 2.5 2.41 2.5c-.886 0-1.488.738-1.706 1.056-.14.228-.28.466-.41.704-.004.008-.007.016-.01.024-1.022 1.636-1.523 3.125-1.523 4.507C-.02 11.218.482 12.607 1.5 14.243c.004.008.007.016.01.024.13.238.27.476.41.704C2.622 15.762 3.225 16.5 4.11 16.5c.886 0 1.488-.738 1.706-1.056.14-.228.28-.466.41-.704.004.008.007.016.01.024 1.022-1.636 1.523-3.125 1.523-4.507 0-1.382-.502-2.771-1.523-4.407zM5 21H1V7h4v14z" />
 
                   </svg>
                 </a>
                 <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.346.14-.897.31-1.75.35-1.72.084-2.213.084-2.628.084s-.908 0-2.628-.084c-.854-.04-1.405-.21-1.75-.35-.49-.208-.79-.467-1.09-.764-.3-.298-.557-.6-.764-1.09-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
                   </svg>
                 </a>
               </div>
@@ -1445,8 +1560,409 @@ function App() {
           <MessageCircle className="w-7 h-7" />
         </button>
       </div>
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentModal && (
+        <PaymentConfirmationModal
+          cartItems={cartItems}
+          deliveryCharge={50} // Fixed delivery charge
+          onClose={() => setShowPaymentModal(false)}
+          onConfirmPayment={async (selectedPaymentMethod) => {
+            console.log('Payment confirmed with method:', selectedPaymentMethod);
+
+            // Generate a simple order ID (in a real app, this would be from the backend)
+            const orderId = `ORD-${Date.now()}`;
+            const orderDate = new Date().toISOString();
+            const totalAmount = (cartItems.reduce((total, item) => total + item.price * item.quantity, 0) + 50).toFixed(2);
+
+            if (!customerId) {
+              console.error("No customer ID available. Cannot place order.");
+              // You might want to show an alert or redirect to login
+              return;
+            }
+
+            try {
+              // 1. Place the order in the database
+              const orderResponse = await fetch('http://localhost:5000/api/placeOrder', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  orderId,
+                  customerId,
+                  orderDate,
+                  totalAmount,
+                  paymentId: 1, // Placeholder payment ID, adjust as needed
+                  deliveryMode: selectedPaymentMethod,
+                  deliveryStatus: 'Pending',
+                  orderItems: cartItems, // Send all cart items as part of the order
+                }),
+              });
+
+              const orderData = await orderResponse.json();
+
+              if (orderResponse.ok) {
+                console.log('Order placed successfully:', orderData.message);
+
+                // 2. Update cart items in the database (clear the user's cart)
+                const clearCartResponse = await fetch('http://localhost:5000/api/clearCart', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ customerId }),
+                });
+
+                const clearCartData = await clearCartResponse.json();
+
+                if (clearCartResponse.ok) {
+                  console.log('Cart cleared successfully:', clearCartData.message);
+                  setCartItems([]); // Clear local cart state
+                  setShowPaymentModal(false); // Close payment modal
+                  alert(`Order placed successfully! Your Order ID is: ${orderId}`); // Use custom modal in production
+                } else {
+                  console.error('Failed to clear cart:', clearCartData.message || 'Unknown error');
+                  alert('Order placed, but failed to clear cart. Please refresh.'); // Use custom modal
+                }
+
+              } else {
+                console.error('Failed to place order:', orderData.message || 'Unknown error');
+                alert('Failed to place order: ' + (orderData.message || 'Please try again.')); // Use custom modal
+              }
+            } catch (error) {
+              console.error('Network error placing order or clearing cart:', error);
+              alert('Network error. Please try again later.'); // Use custom modal
+            }
+          }}
+        />
+      )}
     </>
   );
 }
 
 export default App;
+
+
+//*UserProfileModal* by hafiz
+const UserProfileModal = ({ onClose, onLogout, onViewProfile }) => {
+  const handleOptionClick = (option) => {
+    console.log(`User clicked: ${option}`);
+    if (option === 'Your Profile') {
+      onViewProfile();
+    }
+    onClose(); // Close modal after clicking an option
+  };
+
+  return (
+    <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
+      <h3 className="px-4 py-2 text-sm font-bold text-gray-800 border-b border-gray-200">Your Profile</h3>
+      <button
+        onClick={() => handleOptionClick('Your Profile')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <User className="w-4 h-4" />
+        <span>Your Profile</span>
+      </button>
+      <button
+        onClick={() => handleOptionClick('Track Your Order')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <Package className="w-4 h-4" />
+        <span>Track Your Order</span>
+      </button>
+      <button
+        onClick={() => handleOptionClick('Your Past Orders')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <History className="w-4 h-4" />
+        <span>Your Past Orders</span>
+      </button>
+      <button
+        onClick={() => handleOptionClick('Your Ratings and Reviews')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <MessageSquare className="w-4 h-4" />
+        <span>Your Ratings and Reviews</span>
+      </button>
+      <button
+        onClick={onLogout}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left border-t border-gray-200 mt-1"
+      >
+        <LogOut className="w-4 h-4" />
+        <span>Log Out</span>
+      </button>
+    </div>
+  );
+};
+
+//*AdminProfileModal* by hafiz
+const AdminProfileModal = ({ onClose, onLogout }) => {
+  const handleOptionClick = (option) => {
+    console.log(`Admin clicked: ${option}`);
+    // Implement navigation or specific actions for admin
+    onClose(); // Close modal after clicking an option
+  };
+
+  return (
+    <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
+      <h3 className="px-4 py-2 text-sm font-bold text-gray-800 border-b border-gray-200">Admin Panel</h3>
+      <button
+        onClick={() => handleOptionClick('Your Profile (Admin)')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <User className="w-4 h-4" />
+        <span>Your Profile</span>
+      </button>
+      <button
+        onClick={() => handleOptionClick('Update Order Status')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <Settings className="w-4 h-4" />
+        <span>Update Order Status</span>
+      </button>
+      <button
+        onClick={() => handleOptionClick('Add Product')}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+      >
+        <PlusCircle className="w-4 h-4" />
+        <span>Add Product</span>
+      </button>
+      <button
+        onClick={onLogout}
+        className="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left border-t border-gray-200 mt-1"
+      >
+        <LogOut className="w-4 h-4" />
+        <span>Log Out</span>
+      </button>
+    </div>
+  );
+};
+
+//*PaymentConfirmationModal* by hafiz
+const PaymentConfirmationModal = ({ cartItems, deliveryCharge, onClose, onConfirmPayment }) => {
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash_on_delivery'); // Default to COD
+
+  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const totalPayable = subtotal + deliveryCharge;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-[1000] p-4">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative animate-fade-in-up">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition"
+          aria-label="Close payment confirmation"
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Order Summary</h2>
+
+        <div className="space-y-3 max-h-80 overflow-y-auto pr-2 mb-6">
+          {cartItems.map((item) => (
+            <div key={item.id} className="flex items-center justify-between border-b border-gray-100 pb-2">
+              <div className="flex-1">
+                <p className="font-semibold text-gray-800 text-sm">{item.name}</p>
+                <p className="text-gray-600 text-xs">Quantity: {item.quantity} x ৳{item.price.toFixed(2)}</p>
+              </div>
+              <p className="font-bold text-gray-900 text-sm">৳{(item.price * item.quantity).toFixed(2)}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-gray-200 pt-4 space-y-2">
+          <div className="flex justify-between text-gray-700">
+            <span>Subtotal:</span>
+            <span>৳{subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-gray-700">
+            <span>Delivery Charge:</span>
+            <span>৳{deliveryCharge.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-xl font-bold text-blue-600 pt-2 border-t border-gray-200">
+            <span>Total Payable:</span>
+            <span>৳{totalPayable.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* Payment Options Selection */}
+        <div className="mt-6 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Method</h3>
+          <div className="space-y-2">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="cash_on_delivery"
+                checked={selectedPaymentMethod === 'cash_on_delivery'}
+                onChange={() => setSelectedPaymentMethod('cash_on_delivery')}
+                className="form-radio h-4 w-4 text-blue-600"
+              />
+              <span className="text-gray-700">Cash on Delivery</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="card_payment"
+                checked={selectedPaymentMethod === 'card_payment'}
+                onChange={() => setSelectedPaymentMethod('card_payment')}
+                className="form-radio h-4 w-4 text-blue-600"
+                disabled // Disable for now
+              />
+              <span className="text-gray-700">Card Payment (Coming Soon)</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="mobile_banking"
+                checked={selectedPaymentMethod === 'mobile_banking'}
+                onChange={() => setSelectedPaymentMethod('mobile_banking')}
+                className="form-radio h-4 w-4 text-blue-600"
+                disabled // Disable for now
+              />
+              <span className="text-gray-700">Mobile Banking (Coming Soon)</span>
+            </label>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onConfirmPayment(selectedPaymentMethod)}
+          className="mt-6 w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition"
+        >
+          Place Order
+        </button>
+      </div>
+    </div>
+  );
+};
+
+//*SignupPage* by hafiz
+const SignupPage = ({ onClose, onSignInClick }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/signUp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Signup successful:', data.message);
+        // Optionally, automatically log in the user or redirect to login
+        onSignInClick(); // Go to sign-in page after successful signup
+      } else {
+        setError(data.message || 'Signup failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Network error during signup:', err);
+      setError('An error occurred during signup. Please try again later.');
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center p-4">
+      <h2 className="text-2xl font-bold mb-4">Sign Up</h2>
+      <form onSubmit={handleSignup} className="w-full max-w-sm">
+        <div className="mb-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div className="mb-6">
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300"
+        >
+          Sign Up
+        </button>
+      </form>
+      <p className="mt-4 text-sm text-gray-600">
+        Already have an account?{' '}
+        <button onClick={onSignInClick} className="text-blue-600 hover:underline">
+          Sign In
+        </button>
+      </p>
+    </div>
+  );
+};
+
+// New UserProfilePage Component
+const UserProfilePage = ({ customerId, username, onBackClick }) => {
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Your Profile</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Profile</h2>
+        {customerId ? (
+          <div className="space-y-4">
+            <p className="text-lg">
+              <span className="font-semibold">Username:</span> {username}
+            </p>
+            <p className="text-lg">
+              <span className="font-semibold">Customer ID:</span> {customerId}
+            </p>
+            {/* Add more profile details here if available, e.g., email, address, phone */}
+            <p className="text-gray-600 mt-4">
+              This is a basic profile page. More details and editing options can be added here.
+            </p>
+          </div>
+        ) : (
+          <p className="text-lg text-red-500">Please sign in to view your profile details.</p>
+        )}
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
