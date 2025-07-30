@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit, Trash2, CheckCircle } from 'lucide-react'; // Added CheckCircle icon for order status
 
-// import SignupPage from './SignupPage'; // REMOVED: Moving SignupPage inline
+
+import SignupPage from './SignupPage'; // Importing SignupPage from its separate file
 
 const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
-  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts' or 'trackOrder' or 'updateOrderStatus')
+  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts' or 'trackOrder' or 'updateOrderStatus' or 'pastOrders' or 'userReviews')
   const [currentPage, setCurrentPage] = useState('home');
   // State for storing the product data when a product is clicked
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -181,33 +182,11 @@ function App() {
     gap: "10px",
   };
 
-  const loginBtnStyle = {
-    width: "100px",
-    height: "40px",
-    borderRadius: "4px", // slightly rounded rectangle
-    fontWeight: "bold",
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "2px solid #007bff",
-  };
+  // Modernized button styles using Tailwind classes
+  const loginBtnClass = "px-4 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition-all duration-300";
+  const signupBtnClass = "px-4 py-2 rounded-full bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition-all duration-300";
+  const logoutBtnClass = "px-4 py-2 rounded-full bg-red-600 text-white font-semibold shadow-md hover:bg-red-700 transition-all duration-300";
 
-  const signupBtnStyle = {
-    width: "100px",
-    height: "40px",
-    borderRadius: "4px", // slightly rounded rectangle
-    fontWeight: "bold",
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "2px solid #007bff",
-  };
 
   const signedIn = {
     display: "flex",
@@ -228,19 +207,6 @@ function App() {
     justifyContent: "center",
   };
 
-  const logoutBtnStyle = {
-    width: "100px",
-    height: "40px",
-    borderRadius: "4px", // slightly rounded rectangle
-    fontWeight: "bold",
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "20px solid #007bff",
-  };
 
   // State for managing the categories menu visibility
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
@@ -552,28 +518,51 @@ function App() {
   });
 
   // Product Detail Page Component
-  const ProductDetailPage = ({ product, onBackClick, onAddToCart }) => {
+  const ProductDetailPage = ({ product, onBackClick, onAddToCart, customerId, username }) => {
     const [userRating, setUserRating] = useState(0);
     const [userReview, setUserReview] = useState('');
     // State to store submitted reviews for this product
     const [productReviews, setProductReviews] = useState([]);
+    const [reviewMessage, setReviewMessage] = useState({ type: '', text: '' }); // 'success' or 'error'
+
+    // Fetch reviews for the current product when the component mounts or product changes
+    useEffect(() => {
+      const fetchProductReviews = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/reviews/product/${product.id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch product reviews.');
+          }
+          const data = await response.json();
+          setProductReviews(data);
+        } catch (error) {
+          console.error('Error fetching product reviews:', error);
+          setReviewMessage({ type: 'error', text: 'Failed to load reviews.' });
+        }
+      };
+
+      if (product && product.id) {
+        fetchProductReviews();
+      }
+    }, [product]);
 
     const handleRatingClick = (rating) => {
       setUserRating(rating);
     };
 
-    //*handleSubmitReview* by hafiz
     const handleSubmitReview = async () => {
-      if (userReview.trim() === '' || userRating === 0) {
-        // Using a custom modal for alerts instead of window.alert
-        console.warn('Please provide a rating and a review.');
-        // In a real app, you'd show a modal here
+      setReviewMessage({ type: '', text: '' }); // Clear previous messages
+
+      if (!customerId) {
+        setReviewMessage({ type: 'error', text: 'Please sign in to submit a review.' });
         return;
       }
 
-      console.log('Submitting Review:', { product: product.name, rating: userRating, review: userReview });
+      if (userReview.trim() === '' || userRating === 0) {
+        setReviewMessage({ type: 'error', text: 'Please provide a rating and a review.' });
+        return;
+      }
 
-      // Simulate API call to backend
       try {
         const response = await fetch('http://localhost:5000/api/submitReview', {
           method: 'POST',
@@ -582,36 +571,34 @@ function App() {
           },
           body: JSON.stringify({
             productId: product.id,
-            customerId: customerId, // Assuming customerId is available
-            username: username, // Assuming username is available
+            customerId: customerId,
+            username: username,
             rating: userRating,
             review: userReview,
+            date: new Date().toISOString(), // Store as ISO string
           }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          console.log('Review submitted successfully:', data.message);
-          // Add the new review to the local state for immediate display
-          setProductReviews(prevReviews => [...prevReviews, {
-            id: Date.now(), // Unique ID for key
-            username: username,
-            rating: userRating,
-            review: userReview,
-            date: new Date().toLocaleDateString(), // Current date
-          }]);
+          setReviewMessage({ type: 'success', text: 'Review submitted successfully!' });
           setUserRating(0);
           setUserReview('');
-          // Show a success message to the user (e.g., via a temporary notification or modal)
-          // alert('Review submitted successfully!'); // Use custom modal
+          // Re-fetch reviews to show the newly added one
+          const updatedReviewsResponse = await fetch(`http://localhost:5000/api/reviews/product/${product.id}`);
+          if (updatedReviewsResponse.ok) {
+            const updatedReviewsData = await updatedReviewsResponse.json();
+            setProductReviews(updatedReviewsData);
+          } else {
+            console.error('Failed to re-fetch reviews after submission.');
+          }
         } else {
-          console.error('Failed to submit review:', data.message || 'Unknown error');
-          // alert('Failed to submit review: ' + (data.message || 'Please try again.')); // Use custom modal
+          setReviewMessage({ type: 'error', text: data.message || 'Failed to submit review. Please try again.' });
         }
       } catch (error) {
         console.error('Network error submitting review:', error);
-        // alert('Network error submitting review. Please try again.'); // Use custom modal
+        setReviewMessage({ type: 'error', text: 'Network error submitting review. Please try again later.' });
       }
     };
 
@@ -758,6 +745,13 @@ function App() {
         <div className="mt-10 bg-white p-6 rounded-xl shadow-lg"> {/* Smaller padding, margin */}
           <h2 className="text-lg font-bold text-gray-800 mb-3">Customer Reviews</h2> {/* Smaller font, updated title */}
 
+          {reviewMessage.text && (
+            <div className={`p-3 mb-4 rounded-md text-sm ${reviewMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+              {reviewMessage.text}
+            </div>
+          )}
+
           {/* Star Rating Input */}
           <div className="mb-3 flex items-center"> {/* Smaller margin */}
             <span className="font-semibold text-sm text-gray-700 mr-2">Rate this product:</span> {/* Smaller font */}
@@ -806,7 +800,7 @@ function App() {
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-500 ml-auto">{review.date}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{new Date(review.date).toLocaleDateString()}</span>
                   </div>
                   <p className="text-sm text-gray-700">{review.review}</p>
                 </div>
@@ -922,15 +916,7 @@ function App() {
                     style={{ width: '100%', padding: 8 }}
                   />
                 </div>
-                <button type="submit" style={{
-                  width: '100%',
-                  padding: 10,
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}>
+                <button type="submit" className={loginBtnClass}> {/* Applied modern class */}
                   Sign In
                 </button>
               </form>
@@ -1121,6 +1107,14 @@ function App() {
                             setShowProfileMenu(false);
                             setCurrentPage('trackOrder');
                           }}
+                          onViewPastOrders={() => { // New prop for Past Orders
+                            setShowProfileMenu(false);
+                            setCurrentPage('pastOrders');
+                          }}
+                          onViewUserReviews={() => { // New prop for User Reviews
+                            setShowProfileMenu(false);
+                            setCurrentPage('userReviews');
+                          }}
                           // Pass userProfileData and setUserProfileData to UserProfileModal
                           userProfileData={userProfileData}
                           setUserProfileData={setUserProfileData}
@@ -1129,11 +1123,11 @@ function App() {
                     )}
                   </div>
                 ) : (
-                  <div style={signedOut}>
-                    <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
+                  <div className="flex space-x-2">
+                    <button className={loginBtnClass} onClick={() => setShowLoginModal(true)}> {/* Applied modern class */}
                       Sign In
                     </button>
-                    <button style={signupBtnStyle} onClick={() => setShowSignupModal(true)}>
+                    <button className={signupBtnClass} onClick={() => setShowSignupModal(true)}> {/* Applied modern class */}
                       Sign Up
                     </button>
                   </div>
@@ -1276,6 +1270,8 @@ function App() {
             product={selectedProduct}
             onBackClick={() => setCurrentPage('home')}
             onAddToCart={addToCart}
+            customerId={customerId} // Pass customerId to ProductDetailPage
+            username={username} // Pass username to ProductDetailPage
           />
         ) : currentPage === 'profile' && userBool ? (
           <UserProfilePage
@@ -1299,6 +1295,16 @@ function App() {
           />
         ) : currentPage === 'updateOrderStatus' && adminBool ? (
           <UpdateOrderStatusPage
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'pastOrders' && userBool ? (
+          <PastOrdersPage
+            customerId={customerId}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'userReviews' && userBool ? (
+          <UserReviewsPage
+            customerId={customerId}
             onBackClick={() => setCurrentPage('home')}
           />
         ) : (
@@ -1564,7 +1570,7 @@ function App() {
                 </a>
                 <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c-.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
                   </svg>
                 </a>
               </div>
@@ -1616,7 +1622,7 @@ function App() {
 
             if (!customerId) {
               console.error("No customer ID available. Cannot place order.");
-              // You might want to show an alert or redirect to login
+              // You might want to show an an alert or redirect to login
               return;
             }
 
@@ -1684,13 +1690,17 @@ export default App;
 
 
 //*UserProfileModal* by hafiz
-const UserProfileModal = ({ onClose, onLogout, onViewProfile, onTrackOrder, userProfileData, setUserProfileData }) => {
+const UserProfileModal = ({ onClose, onLogout, onViewProfile, onTrackOrder, onViewPastOrders, onViewUserReviews, userProfileData, setUserProfileData }) => {
   const handleOptionClick = (option) => {
     console.log(`User clicked: ${option}`);
     if (option === 'Your Profile') {
       onViewProfile();
     } else if (option === 'Track Your Order') {
       onTrackOrder();
+    } else if (option === 'Your Past Orders') {
+      onViewPastOrders();
+    } else if (option === 'Your Ratings and Reviews') {
+      onViewUserReviews();
     }
     onClose(); // Close modal after clicking an option
   };
@@ -1885,98 +1895,6 @@ const PaymentConfirmationModal = ({ cartItems, deliveryCharge, onClose, onConfir
   );
 };
 
-//*SignupPage* by hafiz
-const SignupPage = ({ onClose, onSignInClick }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/signUp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('Signup successful:', data.message);
-        // Optionally, automatically log in the user or redirect to login
-        onSignInClick(); // Go to sign-in page after successful signup
-      } else {
-        setError(data.message || 'Signup failed. Please try again.');
-      }
-    } catch (err) {
-      console.error('Network error during signup:', err);
-      setError('An error occurred during signup. Please try again later.');
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center p-4">
-      <h2 className="text-2xl font-bold mb-4">Sign Up</h2>
-      <form onSubmit={handleSignup} className="w-full max-w-sm">
-        <div className="mb-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        <div className="mb-6">
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition-all duration-300"
-        >
-          Sign Up
-        </button>
-      </form>
-      <p className="mt-4 text-sm text-gray-600">
-        Already have an account?{' '}
-        <button onClick={onSignInClick} className="text-blue-600 hover:underline">
-          Sign In
-        </button>
-      </p>
-    </div>
-  );
-};
-
 // New UserProfilePage Component
 const UserProfilePage = ({ customerId, username, userProfileData, setUserProfileData, onBackClick }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -1992,12 +1910,14 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
 
   // Effect to update editForm when userProfileData changes (e.g., after login or successful update)
   useEffect(() => {
-    setEditForm(prevForm => ({
-      ...prevForm,
-      name: userProfileData.name,
-      phone: userProfileData.phone,
-      email: userProfileData.email,
-    }));
+    if (userProfileData) {
+      setEditForm(prevForm => ({
+        ...prevForm,
+        name: userProfileData.name || '',
+        phone: userProfileData.phone || '',
+        email: userProfileData.email || '',
+      }));
+    }
   }, [userProfileData]);
 
 
@@ -2066,6 +1986,7 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
 
       // Update local state with new profile data
       setUserProfileData({
+        ...userProfileData, // Keep existing fields not updated here
         name: editForm.name,
         phone: editForm.phone,
         email: editForm.email,
@@ -2106,13 +2027,13 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
                   <span className="font-semibold">Username:</span> {username}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Customer Name:</span> {userProfileData.name}
+                  <span className="font-semibold">Customer Name:</span> {userProfileData?.name || 'N/A'}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Phone:</span> {userProfileData.phone}
+                  <span className="font-semibold">Phone:</span> {userProfileData?.phone || 'N/A'}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Email:</span> {userProfileData.email}
+                  <span className="font-semibold">Email:</span> {userProfileData?.email || 'N/A'}
                 </p>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -2201,9 +2122,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
                     onClick={() => {
                       setIsEditing(false);
                       setEditForm({ // Reset form to current profile data
-                        name: userProfileData.name,
-                        phone: userProfileData.phone,
-                        email: userProfileData.email,
+                        name: userProfileData?.name || '',
+                        phone: userProfileData?.phone || '',
+                        email: userProfileData?.email || '',
                         currentPassword: '',
                         newPassword: '',
                         confirmNewPassword: '',
@@ -2240,8 +2161,11 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
   );
 };
 
+
+
 // New ModifyProductsPage Component for Admin
 const ModifyProductsPage = ({ products, fetchProducts, onBackClick, allCategories }) => {
+
   const [showProductFormModal, setShowProductFormModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // Product being edited
 
@@ -2289,7 +2213,7 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick, allCategorie
           body: JSON.stringify(productData),
         });
       } else { // Otherwise, it's a new product
-        response = await fetch('http://localhost:5000/api/products/add', {
+        response = await fetch('http://localhost:5000/api/productsAdd', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(productData),
@@ -2392,6 +2316,34 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick, allCategorie
 };
 
 
+// const updateProduct = async(productDataForAdd) => {
+//   try {
+//       let response;
+//       response = await fetch('http://localhost:5000/api/productsAdd', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify(productDataForAdd),
+//       });
+
+//       if (response.ok) {
+//         console.log('Product saved successfully!');
+//         // setShowProductFormModal(false);
+//         // fetchProducts(); // Refresh the product list
+//       } else {
+//         const errorData = await response.json();
+//         console.error('Failed to save product:', errorData.message || 'Unknown error');
+//         // Using a custom alert/modal instead of window.alert
+//         alert('Failed to save product: ' + (errorData.message || 'Please try again.'));
+//       }
+//     } catch (error) {
+//       console.error('Network error saving product:', error);
+//       // Using a custom alert/modal instead of window.alert
+//       alert('Network error saving product. Please try again later.');
+//     }
+
+// };
+
+
 // New ProductFormModal Component (for adding and editing products)
 const ProductFormModal = ({ onClose, onSave, productToEdit, allCategories }) => {
   const [formData, setFormData] = useState({
@@ -2463,13 +2415,13 @@ const ProductFormModal = ({ onClose, onSave, productToEdit, allCategories }) => 
 
     const productData = {
       ...formData,
+      name: formData.name,
+      description: formData.description,
       price: parseFloat(formData.price),
+      image: formData.imageUrl,
       // category is sent as an object with name, backend needs to handle mapping to ID
       category: { name: formData.category },
-      // Remove stock, sku, tags from the payload
-      stock: 0, // Default or handle as per backend logic if stock is not managed here
-      sku: '',
-      tags: [],
+      brand: formData.brand
     };
 
     if (productToEdit) {
@@ -2477,6 +2429,8 @@ const ProductFormModal = ({ onClose, onSave, productToEdit, allCategories }) => 
     }
 
     onSave(productData); // Call the onSave prop passed from ModifyProductsPage
+
+    // updateProduct(productData);
   };
 
   return (
@@ -2622,7 +2576,6 @@ const TrackOrderPage = ({ customerId, onBackClick }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -2654,13 +2607,13 @@ const TrackOrderPage = ({ customerId, onBackClick }) => {
   }, [customerId]);
 
   const orderStatuses = [
-    { status: 'Order Placed', description: 'Your order is successfully placed.', completed: true },
-    { status: 'Processing', description: 'We have received your order, our team will process it shortly.', completed: false },
-    { status: 'Confirmed', description: 'We have confirmed your order.', completed: false },
-    { status: 'Packing', description: 'We are currently packing your order.', completed: false },
-    { status: 'Packed', description: 'Your order is packed now.', completed: false },
-    { status: 'Delivering', description: 'Our delivery partner has picked up your order for delivering.', completed: false },
-    { status: 'Delivered', description: 'You have received your order.', completed: false },
+    { status: 'Order Placed', description: 'Your order is successfully placed.' },
+    { status: 'Processing', description: 'We have received your order, our team will process it shortly.' },
+    { status: 'Confirmed', description: 'We have confirmed your order.' },
+    { status: 'Packing', description: 'We are currently packing your order.' },
+    { status: 'Packed', description: 'Your order is packed now.' },
+    { status: 'Delivering', description: 'Our delivery partner has picked up your order for delivering.' },
+    { status: 'Delivered', description: 'You have received your order.' },
   ];
 
   const getStatusIndex = (status) => orderStatuses.findIndex(s => s.status === status);
@@ -2859,6 +2812,181 @@ const UpdateOrderStatusPage = ({ onBackClick }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New PastOrdersPage Component for Users
+const PastOrdersPage = ({ customerId, onBackClick }) => {
+  const [pastOrders, setPastOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPastOrders = async () => {
+      if (!customerId) {
+        setError("Please sign in to view your past orders.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        // Assuming a backend endpoint to fetch past orders for a customer
+        const response = await fetch('http://localhost:5000/api/orders/past', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch past orders.');
+        }
+        const data = await response.json();
+        setPastOrders(data);
+      } catch (err) {
+        console.error('Error fetching past orders:', err);
+        setError('Failed to load your past orders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPastOrders();
+  }, [customerId]);
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Your Past Orders</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Past Orders</h2>
+
+        {loading && <p className="text-center text-gray-600">Loading past orders...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && pastOrders.length === 0 && (
+          <p className="text-center text-gray-600">You have no past orders.</p>
+        )}
+
+        {!loading && !error && pastOrders.length > 0 && (
+          <div className="space-y-6">
+            {pastOrders.map((order) => (
+              <div key={order.orderId} className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Order ID: #{order.orderId}</h3>
+                <p className="text-gray-600 mb-1">Ordered On: {new Date(order.orderDate).toLocaleDateString()} {new Date(order.orderDate).toLocaleTimeString()}</p>
+                <p className="text-gray-600 mb-2">Total Amount: ৳{parseFloat(order.totalAmount).toFixed(2)}</p>
+                <p className={`font-medium ${
+                  order.deliveryStatus === 'Delivered' ? 'text-green-600' :
+                  order.deliveryStatus === 'Cancelled' ? 'text-red-600' :
+                  'text-blue-600'
+                }`}>
+                  Status: {order.deliveryStatus}
+                </p>
+                <div className="mt-3">
+                  <h4 className="font-semibold text-gray-700">Items:</h4>
+                  <ul className="list-disc list-inside text-gray-600 text-sm">
+                    {order.orderItems && order.orderItems.map((item, idx) => (
+                      <li key={idx}>{item.name} (x{item.quantity}) - ৳{(item.price * item.quantity).toFixed(2)}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New UserReviewsPage Component for Users
+const UserReviewsPage = ({ customerId, onBackClick }) => {
+  const [userReviews, setUserReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserReviews = async () => {
+      if (!customerId) {
+        setError("Please sign in to view your reviews.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        // Assuming a backend endpoint to fetch reviews by a customer
+        const response = await fetch('http://localhost:5000/api/reviews/customerReviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch your reviews.');
+        }
+        const data = await response.json();
+        setUserReviews(data);
+      } catch (err) {
+        console.error('Error fetching user reviews:', err);
+        setError('Failed to load your reviews. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserReviews();
+  }, [customerId]);
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Your Ratings and Reviews</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Ratings and Reviews</h2>
+
+        {loading && <p className="text-center text-gray-600">Loading your reviews...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && userReviews.length === 0 && (
+          <p className="text-center text-gray-600">You have not submitted any reviews yet.</p>
+        )}
+
+        {!loading && !error && userReviews.length > 0 && (
+          <div className="space-y-6">
+            {userReviews.map((review) => (
+              <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{review.productName}</h3>
+                <div className="flex items-center mb-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${star <= review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-gray-600 text-sm ml-3">Reviewed on: {new Date(review.date).toLocaleDateString()}</span>
+                </div>
+                <p className="text-gray-700">{review.review}</p>
+              </div>
+            ))}
           </div>
         )}
 

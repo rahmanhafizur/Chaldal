@@ -11,6 +11,8 @@ const db = require('./config/db'); // Path is relative from app.js to config
 const productRoutes = require('./routes/products'); // Path is relative from app.js to routes
 const categoriesRoutes = require('./routes/categories');
 
+const productAdd = require('./routes/productAdd');
+
 const signInRoutes = require('./routes/signIn');
 const signUpRoutes = require('./routes/signUp');
 const cartUpdateRoutes = require('./routes/cartUpdate');
@@ -26,6 +28,8 @@ app.use(bodyParser.json()); // Parse JSON request bodies
 // API Routes - These should come before static file serving to prioritize API calls
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoriesRoutes);
+
+app.use('/api/productsAdd', productAdd);
 
 app.use('/api/auth', signInRoutes);
 app.use('/api/auth', signUpRoutes);
