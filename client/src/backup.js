@@ -1,6 +1,6 @@
 // CHALDAL/client/src/App.js
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit } from 'lucide-react'; // Added Edit icon
+import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit, Trash2 } from 'lucide-react'; // Added Edit and Trash2 icons
 
 
 // import SignupPage from './SignupPage'; // REMOVED: Moving SignupPage inline
@@ -9,7 +9,7 @@ const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/asse
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
-  // State for managing the current page view ('home' or 'productDetail' or 'profile')
+  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts')
   const [currentPage, setCurrentPage] = useState('home');
   // State for storing the product data when a product is clicked
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -20,20 +20,15 @@ function App() {
   const [customerId, setCustomerId] = useState('');
   const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
+
+  const [adminBool, setAdminBool] = useState(false);
   // New state for user role: 'guest', 'customer', 'admin'
+
   const [userRole, setUserRole] = useState('guest'); // Default to guest
 
   // New state for storing full user profile details
-  const [userProfileData, setUserProfileData] = useState({
-    customerName: '',
-    customerPhone: '',
-    customerEmail: '',
-  });
+  const [userProfileData, setUserProfileData] = useState(null);
 
-
-  const handleSignInClick = () => {
-    setShowLoginModal(true);
-  };
 
   // State for managing the cart
   const [cartItems, setCartItems] = useState([]);
@@ -95,7 +90,6 @@ function App() {
 
 
 
-
   // Added by Fahim ... ...
   // MODIFIED: handleLogin function to make an API call to the backend
   const handleLogin = async (username, password) => { // Make this function async
@@ -125,14 +119,22 @@ function App() {
         setUsername(data.user.username); // Using data.user.name as the display name
         setUserBool(true); // Set user as logged in
         setShowLoginModal(false); // Close the login modal
-        setUserRole(data.user.role || 'customer'); // Set user role based on backend response
+        setUserRole(data.user.status || 'customer'); // Set user role based on backend response
+
+        mergeCartItems(data.user.id)
+
+
+        console.log('The user is a/an ' + data.user.status);
+
+        // this will check a user if he/she is an admin or not
+        if(data.user.status == 'admin') {
+          setAdminBool(true);
+        }
 
         // Update user profile data from login response if available
-        setUserProfileData({
-          customerName: data.user.customerName || '',
-          customerPhone: data.user.customerPhone || '',
-          customerEmail: data.user.customerEmail || '',
-        });
+        setUserProfileData(data.user);
+
+        console.log(data.user.email + ': Who is the bug????');
 
         mergeCartItems(data.user.id)
 
@@ -254,54 +256,54 @@ function App() {
 
   // ---------- DATABASE INTEGRATION CHANGES START HERE ----------
   // Effect for fetching products from backend
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoadingProducts(true); // Set loading to true before fetching
-        // Ensure this URL matches your backend server's address and port
-        const response = await fetch('http://localhost:5000/api/products');
-        if (!response.ok) {
-          // If the response is not OK, it means there was a server error or network issue
-          throw new Error(`HTTP error! status: ${response.status}. Please ensure your backend server is running and accessible at http://localhost:5000.`);
-        }
-        const data = await response.json();
-        setProducts(data); // Set the fetched products to state
-
-        // Extract unique categories from fetched products
-        const uniqueCategories = new Map();
-        data.forEach(product => {
-          // Assuming product.category is an object like { id: 1, name: 'Fruits' }
-          // Or if it's a simple ID, handle it
-          if (product.category) {
-            if (typeof product.category === 'object' && product.category.id && product.category.name) {
-              uniqueCategories.set(product.category.id, {
-                id: product.category.id,
-                name: product.category.name
-              });
-            } else if (typeof product.category === 'number' || typeof product.category === 'string') {
-              // If category is just an ID or name, create a simple object for consistency
-              uniqueCategories.set(product.category, {
-                id: product.category,
-                name: `Category ID: ${product.category}` // Fallback name
-              });
-            }
-          }
-        });
-        setAllCategories(Array.from(uniqueCategories.values()));
-
-      } catch (error) {
-        console.error("Could not fetch products:", error);
-        // Provide a more user-friendly error message for common network issues
-        if (error.message.includes("Failed to fetch")) {
-          setProductFetchError("Failed to connect to the backend server. Please ensure your Node.js server is running on http://localhost:5000 and that CORS is configured correctly.");
-        } else {
-          setProductFetchError(error.message); // Store the error message
-        }
-      } finally {
-        setLoadingProducts(false); // Always set loading to false after attempt
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true); // Set loading to true before fetching
+      // Ensure this URL matches your backend server's address and port
+      const response = await fetch('http://localhost:5000/api/products');
+      if (!response.ok) {
+        // If the response is not OK, it means there was a server error or network issue
+        throw new Error(`HTTP error! status: ${response.status}. Please ensure your backend server is running and accessible at http://localhost:5000.`);
       }
-    };
+      const data = await response.json();
+      setProducts(data); // Set the fetched products to state
 
+      // Extract unique categories from fetched products
+      const uniqueCategories = new Map();
+      data.forEach(product => {
+        // Assuming product.category is an object like { id: 1, name: 'Fruits' }
+        // Or if it's a simple ID, handle it
+        if (product.category) {
+          if (typeof product.category === 'object' && product.category.id && product.category.name) {
+            uniqueCategories.set(product.category.id, {
+              id: product.category.id,
+              name: product.category.name
+            });
+          } else if (typeof product.category === 'number' || typeof product.category === 'string') {
+            // If category is just an ID or name, create a simple object for consistency
+            uniqueCategories.set(product.category, {
+              id: product.category,
+              name: `Category ID: ${product.category}` // Fallback name
+            });
+          }
+        }
+      });
+      setAllCategories(Array.from(uniqueCategories.values()));
+
+    } catch (error) {
+      console.error("Could not fetch products:", error);
+      // Provide a more user-friendly error message for common network issues
+      if (error.message.includes("Failed to fetch")) {
+        setProductFetchError("Failed to connect to the backend server. Please ensure your Node.js server is running on http://localhost:5000 and that CORS is configured correctly.");
+      } else {
+        setProductFetchError(error.message); // Store the error message
+      }
+    } finally {
+      setLoadingProducts(false); // Always set loading to false after attempt
+    }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, []); // Empty dependency array means this runs once on mount
 
@@ -373,6 +375,10 @@ function App() {
 
   // Cart Functions
   const addToCart = async (product) => {
+    if(adminBool) {
+      return;
+    }
+
     const existingItem = cartItems.find((item) => item.id === product.id);
     let newProductQuantity;
 
@@ -430,6 +436,10 @@ function App() {
 
 
   const removeFromCart = async (product) => {
+    if(adminBool) {
+      return;
+    }
+
     // Optimistically update local state
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== product.id));
 
@@ -465,6 +475,10 @@ function App() {
   };
 
   const updateCartQuantity = async (productId, newProductQuantity) => {
+    if(adminBool) {
+      return;
+    }
+
     const existingItem = cartItems.find((item) => item.id === productId);
     const quantityToUpdate = Math.max(0, newProductQuantity); // Ensure quantity is not negative
 
@@ -1076,6 +1090,14 @@ function App() {
                             setUserRole('guest'); // Reset role on logout
                             setShowProfileMenu(false);
                           }}
+                          onViewProfile={() => { // Pass onViewProfile to AdminProfileModal
+                            setShowProfileMenu(false);
+                            setCurrentPage('profile');
+                          }}
+                          onViewModifyProducts={() => { // New prop for Modify Products
+                            setShowProfileMenu(false);
+                            setCurrentPage('modifyProducts');
+                          }}
                         />
                       ) : (
                         <UserProfileModal
@@ -1092,6 +1114,9 @@ function App() {
                             setShowProfileMenu(false);
                             setCurrentPage('profile');
                           }}
+                          // Pass userProfileData and setUserProfileData to UserProfileModal
+                          userProfileData={userProfileData}
+                          setUserProfileData={setUserProfileData}
                         />
                       )
                     )}
@@ -1249,13 +1274,19 @@ function App() {
           <UserProfilePage
             customerId={customerId}
             username={username}
-            userProfileData={userProfileData} // Pass user profile data
-            setUserProfileData={setUserProfileData} // Pass setter for updates
+            userProfileData={userProfileData}
+            setUserProfileData={setUserProfileData}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'modifyProducts' && adminBool ? (
+          <ModifyProductsPage
+            products={products}
+            fetchProducts={fetchProducts} // Pass fetchProducts to allow refresh
             onBackClick={() => setCurrentPage('home')}
           />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 pt-28">
-            <p className="text-xl text-gray-700">Please sign in to view your profile.</p>
+            <p className="text-xl text-gray-700">Please sign in as an admin to access this page.</p>
             <button
               onClick={() => setCurrentPage('home')}
               className="mt-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
@@ -1636,7 +1667,7 @@ export default App;
 
 
 //*UserProfileModal* by hafiz
-const UserProfileModal = ({ onClose, onLogout, onViewProfile }) => {
+const UserProfileModal = ({ onClose, onLogout, onViewProfile, userProfileData, setUserProfileData }) => {
   const handleOptionClick = (option) => {
     console.log(`User clicked: ${option}`);
     if (option === 'Your Profile') {
@@ -1688,10 +1719,14 @@ const UserProfileModal = ({ onClose, onLogout, onViewProfile }) => {
 };
 
 //*AdminProfileModal* by hafiz
-const AdminProfileModal = ({ onClose, onLogout }) => {
+const AdminProfileModal = ({ onClose, onLogout, onViewProfile, onViewModifyProducts }) => { // Added onViewModifyProducts prop
   const handleOptionClick = (option) => {
     console.log(`Admin clicked: ${option}`);
-    // Implement navigation or specific actions for admin
+    if (option === 'Your Profile') { // Check for the specific option
+      onViewProfile(); // Call onViewProfile when "Your Profile" is clicked
+    } else if (option === 'Modify Products') {
+      onViewModifyProducts();
+    }
     onClose(); // Close modal after clicking an option
   };
 
@@ -1699,7 +1734,7 @@ const AdminProfileModal = ({ onClose, onLogout }) => {
     <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
       <h3 className="px-4 py-2 text-sm font-bold text-gray-800 border-b border-gray-200">Admin Panel</h3>
       <button
-        onClick={() => handleOptionClick('Your Profile (Admin)')}
+        onClick={() => handleOptionClick('Your Profile')}
         className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
       >
         <User className="w-4 h-4" />
@@ -1713,11 +1748,11 @@ const AdminProfileModal = ({ onClose, onLogout }) => {
         <span>Update Order Status</span>
       </button>
       <button
-        onClick={() => handleOptionClick('Add Product')}
+        onClick={() => handleOptionClick('Modify Products')}
         className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
       >
-        <PlusCircle className="w-4 h-4" />
-        <span>Add Product</span>
+        <PlusCircle className="w-4 h-4" /> {/* Keeping PlusCircle for now, can change if needed */}
+        <span>Modify Products</span>
       </button>
       <button
         onClick={onLogout}
@@ -1899,7 +1934,7 @@ const SignupPage = ({ onClose, onSignInClick }) => {
             placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
@@ -1925,9 +1960,9 @@ const SignupPage = ({ onClose, onSignInClick }) => {
 const UserProfilePage = ({ customerId, username, userProfileData, setUserProfileData, onBackClick }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    customerName: userProfileData.customerName,
-    customerPhone: userProfileData.customerPhone,
-    customerEmail: userProfileData.customerEmail,
+    name: userProfileData.name,
+    phone: userProfileData.phone,
+    email: userProfileData.email,
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: '',
@@ -1938,9 +1973,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
   useEffect(() => {
     setEditForm(prevForm => ({
       ...prevForm,
-      customerName: userProfileData.customerName,
-      customerPhone: userProfileData.customerPhone,
-      customerEmail: userProfileData.customerEmail,
+      name: userProfileData.name,
+      phone: userProfileData.phone,
+      email: userProfileData.email,
     }));
   }, [userProfileData]);
 
@@ -1977,9 +2012,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: customerId,
-          customerName: editForm.customerName,
-          customerPhone: editForm.customerPhone,
-          customerEmail: editForm.customerEmail,
+          name: editForm.name,
+          phone: editForm.phone,
+          email: editForm.email,
         }),
       });
 
@@ -2010,9 +2045,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
 
       // Update local state with new profile data
       setUserProfileData({
-        customerName: editForm.customerName,
-        customerPhone: editForm.customerPhone,
-        customerEmail: editForm.customerEmail,
+        name: editForm.name,
+        phone: editForm.phone,
+        email: editForm.email,
       });
 
       setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
@@ -2050,13 +2085,13 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
                   <span className="font-semibold">Username:</span> {username}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Customer Name:</span> {userProfileData.customerName || 'N/A'}
+                  <span className="font-semibold">Customer Name:</span> {userProfileData.name}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Phone:</span> {userProfileData.customerPhone || 'N/A'}
+                  <span className="font-semibold">Phone:</span> {userProfileData.phone}
                 </p>
                 <p className="text-lg">
-                  <span className="font-semibold">Email:</span> {userProfileData.customerEmail || 'N/A'}
+                  <span className="font-semibold">Email:</span> {userProfileData.email}
                 </p>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -2069,34 +2104,34 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
             ) : (
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div>
-                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Customer Name</label>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Customer Name</label>
                   <input
                     type="text"
-                    id="customerName"
-                    name="customerName"
-                    value={editForm.customerName}
+                    id="name"
+                    name="name"
+                    value={editForm.name}
                     onChange={handleEditChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700">Phone</label>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
                   <input
                     type="text"
-                    id="customerPhone"
-                    name="customerPhone"
-                    value={editForm.customerPhone}
+                    id="phone"
+                    name="phone"
+                    value={editForm.phone}
                     onChange={handleEditChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700">Email</label>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
                   <input
                     type="email"
-                    id="customerEmail"
-                    name="customerEmail"
-                    value={editForm.customerEmail}
+                    id="email"
+                    name="email"
+                    value={editForm.email}
                     onChange={handleEditChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -2145,9 +2180,9 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
                     onClick={() => {
                       setIsEditing(false);
                       setEditForm({ // Reset form to current profile data
-                        customerName: userProfileData.customerName,
-                        customerPhone: userProfileData.customerPhone,
-                        customerEmail: userProfileData.customerEmail,
+                        name: userProfileData.name,
+                        phone: userProfileData.phone,
+                        email: userProfileData.email,
                         currentPassword: '',
                         newPassword: '',
                         confirmNewPassword: '',
@@ -2179,6 +2214,374 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
             Back to Home
           </button>
         )}
+      </div>
+    </div>
+  );
+};
+
+// New ModifyProductsPage Component for Admin
+const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
+  const [showProductFormModal, setShowProductFormModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null); // Product being edited
+
+  const handleAddProductClick = () => {
+    setEditingProduct(null); // Clear any product being edited
+    setShowProductFormModal(true);
+  };
+
+  const handleEditProductClick = (product) => {
+    setEditingProduct(product);
+    setShowProductFormModal(true);
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/products/delete/${productId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          console.log(`Product ${productId} deleted successfully.`);
+          fetchProducts(); // Refresh the product list
+        } else {
+          const errorData = await response.json();
+          console.error('Failed to delete product:', errorData.message || 'Unknown error');
+          alert('Failed to delete product: ' + (errorData.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error deleting product:', error);
+        alert('Network error deleting product. Please try again later.');
+      }
+    }
+  };
+
+  const handleSaveProduct = async (productData) => {
+    try {
+      let response;
+      if (productData.id) { // If productData has an ID, it's an update
+        response = await fetch(`http://localhost:5000/api/products/update/${productData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData),
+        });
+      } else { // Otherwise, it's a new product
+        response = await fetch('http://localhost:5000/api/products/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData),
+        });
+      }
+
+      if (response.ok) {
+        console.log('Product saved successfully!');
+        setShowProductFormModal(false);
+        fetchProducts(); // Refresh the product list
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to save product:', errorData.message || 'Unknown error');
+        alert('Failed to save product: ' + (errorData.message || 'Please try again.'));
+      }
+    } catch (error) {
+      console.error('Network error saving product:', error);
+      alert('Network error saving product. Please try again later.');
+    }
+  };
+
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Modify Products</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Manage Products</h2>
+
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={handleAddProductClick}
+            className="px-8 py-4 rounded-full bg-green-600 text-white font-semibold text-lg shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center space-x-2"
+          >
+            <PlusCircle className="w-6 h-6" />
+            <span>Add New Product</span>
+          </button>
+        </div>
+
+        {products.length === 0 ? (
+          <p className="text-center text-gray-600">No products available to manage.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+            {products.map((product) => (
+              <div key={product.id} className="bg-gray-50 p-4 rounded-xl shadow-md w-full max-w-xs">
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="rounded-lg mb-3 w-full h-32 object-cover"
+                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/150x100/cccccc/333333?text=Image+Error'; }}
+                />
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
+                <p className="text-gray-600 text-sm mb-2">৳{product.price.toFixed(2)}</p>
+                <p className="text-gray-600 text-sm mb-3">Stock: {product.stock || 'N/A'}</p> {/* Display stock */}
+
+                <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => handleEditProductClick(product)}
+                    className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+
+      {showProductFormModal && (
+        <ProductFormModal
+          onClose={() => setShowProductFormModal(false)}
+          onSave={handleSaveProduct}
+          productToEdit={editingProduct}
+        />
+      )}
+    </div>
+  );
+};
+
+
+// New ProductFormModal Component (for adding and editing products)
+const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    imageUrl: '',
+    category: '', // Assuming category is a string ID or name
+    sku: '',
+    stock: '', // New field for stock
+    tags: '', // Tags as a comma-separated string
+  });
+  const [formMessage, setFormMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    if (productToEdit) {
+      setFormData({
+        name: productToEdit.name || '',
+        description: productToEdit.description || '',
+        price: productToEdit.price || '',
+        imageUrl: productToEdit.imageUrl || '',
+        category: productToEdit.category?.name || productToEdit.category || '', // Handle category object or string
+        sku: productToEdit.sku || '',
+        stock: productToEdit.stock || '',
+        tags: Array.isArray(productToEdit.tags) ? productToEdit.tags.join(', ') : productToEdit.tags || '',
+      });
+    } else {
+      // Reset form if no product to edit (for "Add New Product")
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        imageUrl: '',
+        category: '',
+        sku: '',
+        stock: '',
+        tags: '',
+      });
+    }
+  }, [productToEdit]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormMessage({ type: '', text: '' });
+
+    // Basic validation
+    if (!formData.name || !formData.price || !formData.imageUrl || !formData.stock) {
+      setFormMessage({ type: 'error', text: 'Please fill in all required fields (Name, Price, Image URL, Stock).' });
+      return;
+    }
+    if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
+      setFormMessage({ type: 'error', text: 'Price must be a positive number.' });
+      return;
+    }
+    if (isNaN(parseInt(formData.stock)) || parseInt(formData.stock) < 0) {
+      setFormMessage({ type: 'error', text: 'Stock must be a non-negative integer.' });
+      return;
+    }
+
+    const productData = {
+      ...formData,
+      price: parseFloat(formData.price),
+      stock: parseInt(formData.stock),
+      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag), // Convert tags string to array
+      // Assuming category is sent as a string name, backend needs to handle mapping to ID
+      category: { name: formData.category } // Sending category as an object with name
+    };
+
+    if (productToEdit) {
+      productData.id = productToEdit.id; // Add ID for update operation
+    }
+
+    onSave(productData); // Call the onSave prop passed from ModifyProductsPage
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-[1001] p-4">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg relative animate-fade-in-up">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition"
+          aria-label="Close product form"
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          {productToEdit ? 'Edit Product' : 'Add New Product'}
+        </h2>
+
+        {formMessage.text && (
+          <div className={`p-3 mb-4 rounded-md text-sm ${formMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+            {formMessage.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Product Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="3"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            ></textarea>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price (৳)</label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                step="0.01"
+                min="0.01"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
+              <input
+                type="number"
+                id="stock"
+                name="stock"
+                value={formData.stock}
+                onChange={handleChange}
+                min="0"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image URL</label>
+            <input
+              type="url"
+              id="imageUrl"
+              name="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
+            <input
+              type="text"
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="sku" className="block text-sm font-medium text-gray-700">SKU</label>
+            <input
+              type="text"
+              id="sku"
+              name="sku"
+              value={formData.sku}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
+            <input
+              type="text"
+              id="tags"
+              name="tags"
+              value={formData.tags}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., fresh, organic, vegetables"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 rounded-full bg-gray-300 text-gray-800 font-semibold shadow-lg hover:bg-gray-400 transition-all duration-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+            >
+              {productToEdit ? 'Save Changes' : 'Add Product'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

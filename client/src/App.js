@@ -283,7 +283,7 @@ function App() {
             // If category is just an ID or name, create a simple object for consistency
             uniqueCategories.set(product.category, {
               id: product.category,
-              name: `Category ID: ${product.category}` // Fallback name
+              name: `${product.category}` // Fallback name
             });
           }
         }
@@ -1227,7 +1227,7 @@ function App() {
               {/* Only show if products are not loading and no error */}
               {!loadingProducts && !productFetchError && selectedCategory && (
                 <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">
-                  {allCategories.find(cat => cat.id === selectedCategory)?.name || `Category ID: ${selectedCategory}`}
+                  {allCategories.find(cat => cat.id === selectedCategory)?.name || ` ${selectedCategory}`}
                 </h2>
               )}
 
