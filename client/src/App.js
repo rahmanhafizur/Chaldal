@@ -1,7 +1,6 @@
 // CHALDAL/client/src/App.js
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit, Trash2 } from 'lucide-react'; // Added Edit and Trash2 icons
-
+import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit, Trash2, CheckCircle } from 'lucide-react'; // Added CheckCircle icon for order status
 
 // import SignupPage from './SignupPage'; // REMOVED: Moving SignupPage inline
 
@@ -9,7 +8,7 @@ const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/asse
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
-  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts')
+  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts' or 'trackOrder' or 'updateOrderStatus')
   const [currentPage, setCurrentPage] = useState('home');
   // State for storing the product data when a product is clicked
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -240,7 +239,7 @@ function App() {
     justifyContent: "center",
     backgroundColor: "#007bff",
     color: "#fff",
-    border: "2px solid #007bff",
+    border: "20px solid #007bff",
   };
 
   // State for managing the categories menu visibility
@@ -1098,6 +1097,10 @@ function App() {
                             setShowProfileMenu(false);
                             setCurrentPage('modifyProducts');
                           }}
+                          onUpdateOrderStatus={() => { // New prop for Update Order Status
+                            setShowProfileMenu(false);
+                            setCurrentPage('updateOrderStatus');
+                          }}
                         />
                       ) : (
                         <UserProfileModal
@@ -1113,6 +1116,10 @@ function App() {
                           onViewProfile={() => {
                             setShowProfileMenu(false);
                             setCurrentPage('profile');
+                          }}
+                          onTrackOrder={() => { // New prop for Track Order
+                            setShowProfileMenu(false);
+                            setCurrentPage('trackOrder');
                           }}
                           // Pass userProfileData and setUserProfileData to UserProfileModal
                           userProfileData={userProfileData}
@@ -1285,9 +1292,18 @@ function App() {
             allCategories={allCategories} // Pass allCategories to ModifyProductsPage
             onBackClick={() => setCurrentPage('home')}
           />
+        ) : currentPage === 'trackOrder' && userBool ? (
+          <TrackOrderPage
+            customerId={customerId}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'updateOrderStatus' && adminBool ? (
+          <UpdateOrderStatusPage
+            onBackClick={() => setCurrentPage('home')}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 pt-28">
-            <p className="text-xl text-gray-700">Please sign in as an admin to access this page.</p>
+            <p className="text-xl text-gray-700">Access Denied. Please sign in with appropriate permissions.</p>
             <button
               onClick={() => setCurrentPage('home')}
               className="mt-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
@@ -1548,7 +1564,7 @@ function App() {
                 </a>
                 <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c-.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
                   </svg>
                 </a>
               </div>
@@ -1668,11 +1684,13 @@ export default App;
 
 
 //*UserProfileModal* by hafiz
-const UserProfileModal = ({ onClose, onLogout, onViewProfile, userProfileData, setUserProfileData }) => {
+const UserProfileModal = ({ onClose, onLogout, onViewProfile, onTrackOrder, userProfileData, setUserProfileData }) => {
   const handleOptionClick = (option) => {
     console.log(`User clicked: ${option}`);
     if (option === 'Your Profile') {
       onViewProfile();
+    } else if (option === 'Track Your Order') {
+      onTrackOrder();
     }
     onClose(); // Close modal after clicking an option
   };
@@ -1720,13 +1738,15 @@ const UserProfileModal = ({ onClose, onLogout, onViewProfile, userProfileData, s
 };
 
 //*AdminProfileModal* by hafiz
-const AdminProfileModal = ({ onClose, onLogout, onViewProfile, onViewModifyProducts }) => { // Added onViewModifyProducts prop
+const AdminProfileModal = ({ onClose, onLogout, onViewProfile, onViewModifyProducts, onUpdateOrderStatus }) => { // Added onUpdateOrderStatus prop
   const handleOptionClick = (option) => {
     console.log(`Admin clicked: ${option}`);
     if (option === 'Your Profile') { // Check for the specific option
       onViewProfile(); // Call onViewProfile when "Your Profile" is clicked
     } else if (option === 'Modify Products') {
       onViewModifyProducts();
+    } else if (option === 'Update Order Status') {
+      onUpdateOrderStatus();
     }
     onClose(); // Close modal after clicking an option
   };
@@ -2592,6 +2612,262 @@ const ProductFormModal = ({ onClose, onSave, productToEdit, allCategories }) => 
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// New TrackOrderPage Component for Users
+const TrackOrderPage = ({ customerId, onBackClick }) => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!customerId) {
+        setError("Please sign in to track your orders.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/orders/customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders.');
+        }
+        const data = await response.json();
+        setOrders(data);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError('Failed to load your orders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [customerId]);
+
+  const orderStatuses = [
+    { status: 'Order Placed', description: 'Your order is successfully placed.', completed: true },
+    { status: 'Processing', description: 'We have received your order, our team will process it shortly.', completed: false },
+    { status: 'Confirmed', description: 'We have confirmed your order.', completed: false },
+    { status: 'Packing', description: 'We are currently packing your order.', completed: false },
+    { status: 'Packed', description: 'Your order is packed now.', completed: false },
+    { status: 'Delivering', description: 'Our delivery partner has picked up your order for delivering.', completed: false },
+    { status: 'Delivered', description: 'You have received your order.', completed: false },
+  ];
+
+  const getStatusIndex = (status) => orderStatuses.findIndex(s => s.status === status);
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Track Your Order</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Track Your Order</h2>
+
+        {loading && <p className="text-center text-gray-600">Loading orders...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && orders.length === 0 && (
+          <p className="text-center text-gray-600">You have no active orders to track.</p>
+        )}
+
+        {!loading && !error && orders.length > 0 && (
+          <div className="space-y-6">
+            {orders.map((order) => (
+              <div key={order.orderId} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-800">Order ID: #{order.orderId}</h3>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-800' :
+                    order.deliveryStatus === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {order.deliveryStatus}
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-2">Total: ৳{parseFloat(order.totalAmount).toFixed(2)}</p>
+                <p className="text-gray-600 mb-4">Ordered On: {new Date(order.orderDate).toLocaleDateString()} {new Date(order.orderDate).toLocaleTimeString()}</p>
+
+                {/* Timeline */}
+                <div className="relative pl-6">
+                  <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-300"></div> {/* Vertical line */}
+                  {orderStatuses.map((statusStep, index) => {
+                    const isCompleted = getStatusIndex(order.deliveryStatus) >= index;
+                    return (
+                      <div key={index} className="mb-4 flex items-start">
+                        <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                          isCompleted ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}>
+                          {isCompleted ? <CheckCircle className="w-4 h-4" /> : <div className="w-2 h-2 rounded-full bg-gray-500"></div>}
+                        </div>
+                        <div className="ml-6">
+                          <p className={`font-semibold ${isCompleted ? 'text-gray-800' : 'text-gray-500'}`}>
+                            {statusStep.status}
+                          </p>
+                          <p className="text-sm text-gray-600">{statusStep.description}</p>
+                          {statusStep.status === 'Delivering' && isCompleted && (
+                            <a href="#" className="text-blue-600 hover:underline text-sm mt-1 block">Track Order</a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New UpdateOrderStatusPage Component for Admin
+const UpdateOrderStatusPage = ({ onBackClick }) => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [updateMessage, setUpdateMessage] = useState({ type: '', text: '' });
+
+  const fetchAllOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/orders/all'); // Assuming an endpoint to get all orders
+      if (!response.ok) {
+        throw new Error('Failed to fetch all orders.');
+      }
+      const data = await response.json();
+      setOrders(data);
+    } catch (err) {
+      console.error('Error fetching all orders:', err);
+      setError('Failed to load orders. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllOrders();
+  }, []);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/orders/updateStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status.');
+      }
+
+      setUpdateMessage({ type: 'success', text: `Order ${orderId} status updated to ${newStatus}.` });
+      fetchAllOrders(); // Refresh the list of orders
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      setUpdateMessage({ type: 'error', text: `Failed to update status for order ${orderId}.` });
+    }
+  };
+
+  const orderStatusOptions = [
+    'Pending',
+    'Processing',
+    'Confirmed',
+    'Packing',
+    'Packed',
+    'Delivering',
+    'Delivered',
+    'Cancelled'
+  ];
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Update Order Status</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Update Order Status</h2>
+
+        {updateMessage.text && (
+          <div className={`p-3 mb-4 rounded-md text-sm ${updateMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+            {updateMessage.text}
+          </div>
+        )}
+
+        {loading && <p className="text-center text-gray-600">Loading orders...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && orders.length === 0 && (
+          <p className="text-center text-gray-600">No orders found.</p>
+        )}
+
+        {!loading && !error && orders.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+              <thead>
+                <tr className="bg-gray-100 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="py-3 px-4 border-b">Order ID</th>
+                  <th className="py-3 px-4 border-b">Customer ID</th>
+                  <th className="py-3 px-4 border-b">Total Amount</th>
+                  <th className="py-3 px-4 border-b">Order Date</th>
+                  <th className="py-3 px-4 border-b">Current Status</th>
+                  <th className="py-3 px-4 border-b">Update Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.orderId} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="py-3 px-4 text-sm text-gray-800">{order.orderId}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{order.customerId}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">৳{parseFloat(order.totalAmount).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{order.deliveryStatus}</td>
+                    <td className="py-3 px-4 text-sm">
+                      <select
+                        value={order.deliveryStatus}
+                        onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
+                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {orderStatusOptions.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
       </div>
     </div>
   );
