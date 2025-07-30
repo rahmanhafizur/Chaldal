@@ -1282,6 +1282,7 @@ function App() {
           <ModifyProductsPage
             products={products}
             fetchProducts={fetchProducts} // Pass fetchProducts to allow refresh
+            allCategories={allCategories} // Pass allCategories to ModifyProductsPage
             onBackClick={() => setCurrentPage('home')}
           />
         ) : (
@@ -2220,7 +2221,7 @@ const UserProfilePage = ({ customerId, username, userProfileData, setUserProfile
 };
 
 // New ModifyProductsPage Component for Admin
-const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
+const ModifyProductsPage = ({ products, fetchProducts, onBackClick, allCategories }) => {
   const [showProductFormModal, setShowProductFormModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // Product being edited
 
@@ -2247,10 +2248,12 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
         } else {
           const errorData = await response.json();
           console.error('Failed to delete product:', errorData.message || 'Unknown error');
+          // Using a custom alert/modal instead of window.alert
           alert('Failed to delete product: ' + (errorData.message || 'Please try again.'));
         }
       } catch (error) {
         console.error('Network error deleting product:', error);
+        // Using a custom alert/modal instead of window.alert
         alert('Network error deleting product. Please try again later.');
       }
     }
@@ -2280,10 +2283,12 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
       } else {
         const errorData = await response.json();
         console.error('Failed to save product:', errorData.message || 'Unknown error');
+        // Using a custom alert/modal instead of window.alert
         alert('Failed to save product: ' + (errorData.message || 'Please try again.'));
       }
     } catch (error) {
       console.error('Network error saving product:', error);
+      // Using a custom alert/modal instead of window.alert
       alert('Network error saving product. Please try again later.');
     }
   };
@@ -2322,7 +2327,8 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
                 />
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
                 <p className="text-gray-600 text-sm mb-2">৳{product.price.toFixed(2)}</p>
-                <p className="text-gray-600 text-sm mb-3">Stock: {product.stock || 'N/A'}</p> {/* Display stock */}
+                {/* Removed stock display as per new requirements */}
+                {/* <p className="text-gray-600 text-sm mb-3">Stock: {product.stock || 'N/A'}</p> */}
 
                 <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
                   <button
@@ -2358,6 +2364,7 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
           onClose={() => setShowProductFormModal(false)}
           onSave={handleSaveProduct}
           productToEdit={editingProduct}
+          allCategories={allCategories} // Pass allCategories to ProductFormModal
         />
       )}
     </div>
@@ -2366,18 +2373,18 @@ const ModifyProductsPage = ({ products, fetchProducts, onBackClick }) => {
 
 
 // New ProductFormModal Component (for adding and editing products)
-const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
+const ProductFormModal = ({ onClose, onSave, productToEdit, allCategories }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     imageUrl: '',
-    category: '', // Assuming category is a string ID or name
-    sku: '',
-    stock: '', // New field for stock
-    tags: '', // Tags as a comma-separated string
+    category: '', // Assuming category is a string name
+    brand: '', // New field for brand
   });
   const [formMessage, setFormMessage] = useState({ type: '', text: '' });
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   useEffect(() => {
     if (productToEdit) {
@@ -2387,9 +2394,7 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
         price: productToEdit.price || '',
         imageUrl: productToEdit.imageUrl || '',
         category: productToEdit.category?.name || productToEdit.category || '', // Handle category object or string
-        sku: productToEdit.sku || '',
-        stock: productToEdit.stock || '',
-        tags: Array.isArray(productToEdit.tags) ? productToEdit.tags.join(', ') : productToEdit.tags || '',
+        brand: productToEdit.brand || '', // Initialize brand
       });
     } else {
       // Reset form if no product to edit (for "Add New Product")
@@ -2399,9 +2404,7 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
         price: '',
         imageUrl: '',
         category: '',
-        sku: '',
-        stock: '',
-        tags: '',
+        brand: '',
       });
     }
   }, [productToEdit]);
@@ -2409,6 +2412,19 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'category') {
+      const filtered = allCategories.filter(cat =>
+        cat.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+      setShowCategoryDropdown(true);
+    }
+  };
+
+  const handleCategorySelect = (categoryName) => {
+    setFormData(prev => ({ ...prev, category: categoryName }));
+    setShowCategoryDropdown(false);
   };
 
   const handleSubmit = async (e) => {
@@ -2416,26 +2432,24 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
     setFormMessage({ type: '', text: '' });
 
     // Basic validation
-    if (!formData.name || !formData.price || !formData.imageUrl || !formData.stock) {
-      setFormMessage({ type: 'error', text: 'Please fill in all required fields (Name, Price, Image URL, Stock).' });
+    if (!formData.name || !formData.price || !formData.imageUrl || !formData.category || !formData.brand) {
+      setFormMessage({ type: 'error', text: 'Please fill in all required fields (Name, Price, Image URL, Category, Brand).' });
       return;
     }
     if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
       setFormMessage({ type: 'error', text: 'Price must be a positive number.' });
       return;
     }
-    if (isNaN(parseInt(formData.stock)) || parseInt(formData.stock) < 0) {
-      setFormMessage({ type: 'error', text: 'Stock must be a non-negative integer.' });
-      return;
-    }
 
     const productData = {
       ...formData,
       price: parseFloat(formData.price),
-      stock: parseInt(formData.stock),
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag), // Convert tags string to array
-      // Assuming category is sent as a string name, backend needs to handle mapping to ID
-      category: { name: formData.category } // Sending category as an object with name
+      // category is sent as an object with name, backend needs to handle mapping to ID
+      category: { name: formData.category },
+      // Remove stock, sku, tags from the payload
+      stock: 0, // Default or handle as per backend logic if stock is not managed here
+      sku: '',
+      tags: [],
     };
 
     if (productToEdit) {
@@ -2506,21 +2520,7 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
               />
             </div>
             <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock Quantity</label>
-              <input
-                type="number"
-                id="stock"
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                min="0"
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image URL</label>
+              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image URL</label>
             <input
               type="url"
               id="imageUrl"
@@ -2531,7 +2531,9 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
               required
             />
           </div>
-          <div>
+          </div>
+
+          <div className="relative">
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
             <input
               type="text"
@@ -2539,30 +2541,38 @@ const ProductFormModal = ({ onClose, onSave, productToEdit }) => {
               name="category"
               value={formData.category}
               onChange={handleChange}
+              onFocus={() => {
+                setFilteredCategories(allCategories); // Show all categories on focus
+                setShowCategoryDropdown(true);
+              }}
+              onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 100)} // Hide after a short delay
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
             />
+            {showCategoryDropdown && filteredCategories.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto mt-1">
+                {filteredCategories.map((cat) => (
+                  <li
+                    key={cat.id}
+                    onMouseDown={() => handleCategorySelect(cat.name)} // Use onMouseDown to prevent blur event from firing before click
+                    className="p-2 cursor-pointer hover:bg-gray-100 text-gray-800"
+                  >
+                    {cat.name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
-            <label htmlFor="sku" className="block text-sm font-medium text-gray-700">SKU</label>
+            <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand</label>
             <input
               type="text"
-              id="sku"
-              name="sku"
-              value={formData.sku}
+              id="brand"
+              name="brand"
+              value={formData.brand}
               onChange={handleChange}
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
-            <input
-              type="text"
-              id="tags"
-              name="tags"
-              value={formData.tags}
-              onChange={handleChange}
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., fresh, organic, vegetables"
+              required
             />
           </div>
 
