@@ -2,13 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit, Trash2, CheckCircle } from 'lucide-react'; // Added CheckCircle icon for order status
 
-// import SignupPage from './SignupPage'; // REMOVED: Moving SignupPage inline
 
 const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Logo.png?raw=true'; // Placeholder URL for Logo.png
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
-  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts' or 'trackOrder' or 'updateOrderStatus')
+  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts' or 'trackOrder' or 'updateOrderStatus' or 'pastOrders' or 'userReviews')
   const [currentPage, setCurrentPage] = useState('home');
   // State for storing the product data when a product is clicked
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -181,33 +180,11 @@ function App() {
     gap: "10px",
   };
 
-  const loginBtnStyle = {
-    width: "100px",
-    height: "40px",
-    borderRadius: "4px", // slightly rounded rectangle
-    fontWeight: "bold",
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "2px solid #007bff",
-  };
+  // Modernized button styles using Tailwind classes
+  const loginBtnClass = "px-4 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition-all duration-300";
+  const signupBtnClass = "px-4 py-2 rounded-full bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition-all duration-300";
+  const logoutBtnClass = "px-4 py-2 rounded-full bg-red-600 text-white font-semibold shadow-md hover:bg-red-700 transition-all duration-300";
 
-  const signupBtnStyle = {
-    width: "100px",
-    height: "40px",
-    borderRadius: "4px", // slightly rounded rectangle
-    fontWeight: "bold",
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "2px solid #007bff",
-  };
 
   const signedIn = {
     display: "flex",
@@ -228,19 +205,6 @@ function App() {
     justifyContent: "center",
   };
 
-  const logoutBtnStyle = {
-    width: "100px",
-    height: "40px",
-    borderRadius: "4px", // slightly rounded rectangle
-    fontWeight: "bold",
-    fontSize: "18px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#007bff",
-    color: "#fff",
-    border: "20px solid #007bff",
-  };
 
   // State for managing the categories menu visibility
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false);
@@ -552,28 +516,51 @@ function App() {
   });
 
   // Product Detail Page Component
-  const ProductDetailPage = ({ product, onBackClick, onAddToCart }) => {
+  const ProductDetailPage = ({ product, onBackClick, onAddToCart, customerId, username }) => {
     const [userRating, setUserRating] = useState(0);
     const [userReview, setUserReview] = useState('');
     // State to store submitted reviews for this product
     const [productReviews, setProductReviews] = useState([]);
+    const [reviewMessage, setReviewMessage] = useState({ type: '', text: '' }); // 'success' or 'error'
+
+    // Fetch reviews for the current product when the component mounts or product changes
+    useEffect(() => {
+      const fetchProductReviews = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/reviews/product/${product.id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch product reviews.');
+          }
+          const data = await response.json();
+          setProductReviews(data);
+        } catch (error) {
+          console.error('Error fetching product reviews:', error);
+          setReviewMessage({ type: 'error', text: 'Failed to load reviews.' });
+        }
+      };
+
+      if (product && product.id) {
+        fetchProductReviews();
+      }
+    }, [product]);
 
     const handleRatingClick = (rating) => {
       setUserRating(rating);
     };
 
-    //*handleSubmitReview* by hafiz
     const handleSubmitReview = async () => {
-      if (userReview.trim() === '' || userRating === 0) {
-        // Using a custom modal for alerts instead of window.alert
-        console.warn('Please provide a rating and a review.');
-        // In a real app, you'd show a modal here
+      setReviewMessage({ type: '', text: '' }); // Clear previous messages
+
+      if (!customerId) {
+        setReviewMessage({ type: 'error', text: 'Please sign in to submit a review.' });
         return;
       }
 
-      console.log('Submitting Review:', { product: product.name, rating: userRating, review: userReview });
+      if (userReview.trim() === '' || userRating === 0) {
+        setReviewMessage({ type: 'error', text: 'Please provide a rating and a review.' });
+        return;
+      }
 
-      // Simulate API call to backend
       try {
         const response = await fetch('http://localhost:5000/api/submitReview', {
           method: 'POST',
@@ -582,36 +569,34 @@ function App() {
           },
           body: JSON.stringify({
             productId: product.id,
-            customerId: customerId, // Assuming customerId is available
-            username: username, // Assuming username is available
+            customerId: customerId,
+            username: username,
             rating: userRating,
             review: userReview,
+            date: new Date().toISOString(), // Store as ISO string
           }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          console.log('Review submitted successfully:', data.message);
-          // Add the new review to the local state for immediate display
-          setProductReviews(prevReviews => [...prevReviews, {
-            id: Date.now(), // Unique ID for key
-            username: username,
-            rating: userRating,
-            review: userReview,
-            date: new Date().toLocaleDateString(), // Current date
-          }]);
+          setReviewMessage({ type: 'success', text: 'Review submitted successfully!' });
           setUserRating(0);
           setUserReview('');
-          // Show a success message to the user (e.g., via a temporary notification or modal)
-          // alert('Review submitted successfully!'); // Use custom modal
+          // Re-fetch reviews to show the newly added one
+          const updatedReviewsResponse = await fetch(`http://localhost:5000/api/reviews/product/${product.id}`);
+          if (updatedReviewsResponse.ok) {
+            const updatedReviewsData = await updatedReviewsResponse.json();
+            setProductReviews(updatedReviewsData);
+          } else {
+            console.error('Failed to re-fetch reviews after submission.');
+          }
         } else {
-          console.error('Failed to submit review:', data.message || 'Unknown error');
-          // alert('Failed to submit review: ' + (data.message || 'Please try again.')); // Use custom modal
+          setReviewMessage({ type: 'error', text: data.message || 'Failed to submit review. Please try again.' });
         }
       } catch (error) {
         console.error('Network error submitting review:', error);
-        // alert('Network error submitting review. Please try again.'); // Use custom modal
+        setReviewMessage({ type: 'error', text: 'Network error submitting review. Please try again later.' });
       }
     };
 
@@ -758,6 +743,13 @@ function App() {
         <div className="mt-10 bg-white p-6 rounded-xl shadow-lg"> {/* Smaller padding, margin */}
           <h2 className="text-lg font-bold text-gray-800 mb-3">Customer Reviews</h2> {/* Smaller font, updated title */}
 
+          {reviewMessage.text && (
+            <div className={`p-3 mb-4 rounded-md text-sm ${reviewMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+              {reviewMessage.text}
+            </div>
+          )}
+
           {/* Star Rating Input */}
           <div className="mb-3 flex items-center"> {/* Smaller margin */}
             <span className="font-semibold text-sm text-gray-700 mr-2">Rate this product:</span> {/* Smaller font */}
@@ -806,7 +798,7 @@ function App() {
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-gray-500 ml-auto">{review.date}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{new Date(review.date).toLocaleDateString()}</span>
                   </div>
                   <p className="text-sm text-gray-700">{review.review}</p>
                 </div>
@@ -922,15 +914,7 @@ function App() {
                     style={{ width: '100%', padding: 8 }}
                   />
                 </div>
-                <button type="submit" style={{
-                  width: '100%',
-                  padding: 10,
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}>
+                <button type="submit" className={loginBtnClass}> {/* Applied modern class */}
                   Sign In
                 </button>
               </form>
@@ -1121,6 +1105,14 @@ function App() {
                             setShowProfileMenu(false);
                             setCurrentPage('trackOrder');
                           }}
+                          onViewPastOrders={() => { // New prop for Past Orders
+                            setShowProfileMenu(false);
+                            setCurrentPage('pastOrders');
+                          }}
+                          onViewUserReviews={() => { // New prop for User Reviews
+                            setShowProfileMenu(false);
+                            setCurrentPage('userReviews');
+                          }}
                           // Pass userProfileData and setUserProfileData to UserProfileModal
                           userProfileData={userProfileData}
                           setUserProfileData={setUserProfileData}
@@ -1130,10 +1122,10 @@ function App() {
                   </div>
                 ) : (
                   <div style={signedOut}>
-                    <button style={loginBtnStyle} onClick={() => setShowLoginModal(true)}>
+                    <button className={loginBtnClass} onClick={() => setShowLoginModal(true)}> {/* Applied modern class */}
                       Sign In
                     </button>
-                    <button style={signupBtnStyle} onClick={() => setShowSignupModal(true)}>
+                    <button className={signupBtnClass} onClick={() => setShowSignupModal(true)}> {/* Applied modern class */}
                       Sign Up
                     </button>
                   </div>
@@ -1276,6 +1268,8 @@ function App() {
             product={selectedProduct}
             onBackClick={() => setCurrentPage('home')}
             onAddToCart={addToCart}
+            customerId={customerId} // Pass customerId to ProductDetailPage
+            username={username} // Pass username to ProductDetailPage
           />
         ) : currentPage === 'profile' && userBool ? (
           <UserProfilePage
@@ -1299,6 +1293,16 @@ function App() {
           />
         ) : currentPage === 'updateOrderStatus' && adminBool ? (
           <UpdateOrderStatusPage
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'pastOrders' && userBool ? (
+          <PastOrdersPage
+            customerId={customerId}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'userReviews' && userBool ? (
+          <UserReviewsPage
+            customerId={customerId}
             onBackClick={() => setCurrentPage('home')}
           />
         ) : (
@@ -1684,13 +1688,17 @@ export default App;
 
 
 //*UserProfileModal* by hafiz
-const UserProfileModal = ({ onClose, onLogout, onViewProfile, onTrackOrder, userProfileData, setUserProfileData }) => {
+const UserProfileModal = ({ onClose, onLogout, onViewProfile, onTrackOrder, onViewPastOrders, onViewUserReviews, userProfileData, setUserProfileData }) => {
   const handleOptionClick = (option) => {
     console.log(`User clicked: ${option}`);
     if (option === 'Your Profile') {
       onViewProfile();
     } else if (option === 'Track Your Order') {
       onTrackOrder();
+    } else if (option === 'Your Past Orders') {
+      onViewPastOrders();
+    } else if (option === 'Your Ratings and Reviews') {
+      onViewUserReviews();
     }
     onClose(); // Close modal after clicking an option
   };
@@ -2622,7 +2630,6 @@ const TrackOrderPage = ({ customerId, onBackClick }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -2654,13 +2661,13 @@ const TrackOrderPage = ({ customerId, onBackClick }) => {
   }, [customerId]);
 
   const orderStatuses = [
-    { status: 'Order Placed', description: 'Your order is successfully placed.', completed: true },
-    { status: 'Processing', description: 'We have received your order, our team will process it shortly.', completed: false },
-    { status: 'Confirmed', description: 'We have confirmed your order.', completed: false },
-    { status: 'Packing', description: 'We are currently packing your order.', completed: false },
-    { status: 'Packed', description: 'Your order is packed now.', completed: false },
-    { status: 'Delivering', description: 'Our delivery partner has picked up your order for delivering.', completed: false },
-    { status: 'Delivered', description: 'You have received your order.', completed: false },
+    { status: 'Order Placed', description: 'Your order is successfully placed.' },
+    { status: 'Processing', description: 'We have received your order, our team will process it shortly.' },
+    { status: 'Confirmed', description: 'We have confirmed your order.' },
+    { status: 'Packing', description: 'We are currently packing your order.' },
+    { status: 'Packed', description: 'Your order is packed now.' },
+    { status: 'Delivering', description: 'Our delivery partner has picked up your order for delivering.' },
+    { status: 'Delivered', description: 'You have received your order.' },
   ];
 
   const getStatusIndex = (status) => orderStatuses.findIndex(s => s.status === status);
@@ -2859,6 +2866,181 @@ const UpdateOrderStatusPage = ({ onBackClick }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New PastOrdersPage Component for Users
+const PastOrdersPage = ({ customerId, onBackClick }) => {
+  const [pastOrders, setPastOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPastOrders = async () => {
+      if (!customerId) {
+        setError("Please sign in to view your past orders.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        // Assuming a backend endpoint to fetch past orders for a customer
+        const response = await fetch('http://localhost:5000/api/orders/past', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch past orders.');
+        }
+        const data = await response.json();
+        setPastOrders(data);
+      } catch (err) {
+        console.error('Error fetching past orders:', err);
+        setError('Failed to load your past orders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPastOrders();
+  }, [customerId]);
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Your Past Orders</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Past Orders</h2>
+
+        {loading && <p className="text-center text-gray-600">Loading past orders...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && pastOrders.length === 0 && (
+          <p className="text-center text-gray-600">You have no past orders.</p>
+        )}
+
+        {!loading && !error && pastOrders.length > 0 && (
+          <div className="space-y-6">
+            {pastOrders.map((order) => (
+              <div key={order.orderId} className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Order ID: #{order.orderId}</h3>
+                <p className="text-gray-600 mb-1">Ordered On: {new Date(order.orderDate).toLocaleDateString()} {new Date(order.orderDate).toLocaleTimeString()}</p>
+                <p className="text-gray-600 mb-2">Total Amount: ৳{parseFloat(order.totalAmount).toFixed(2)}</p>
+                <p className={`font-medium ${
+                  order.deliveryStatus === 'Delivered' ? 'text-green-600' :
+                  order.deliveryStatus === 'Cancelled' ? 'text-red-600' :
+                  'text-blue-600'
+                }`}>
+                  Status: {order.deliveryStatus}
+                </p>
+                <div className="mt-3">
+                  <h4 className="font-semibold text-gray-700">Items:</h4>
+                  <ul className="list-disc list-inside text-gray-600 text-sm">
+                    {order.orderItems && order.orderItems.map((item, idx) => (
+                      <li key={idx}>{item.name} (x{item.quantity}) - ৳{(item.price * item.quantity).toFixed(2)}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New UserReviewsPage Component for Users
+const UserReviewsPage = ({ customerId, onBackClick }) => {
+  const [userReviews, setUserReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserReviews = async () => {
+      if (!customerId) {
+        setError("Please sign in to view your reviews.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        // Assuming a backend endpoint to fetch reviews by a customer
+        const response = await fetch('http://localhost:5000/api/reviews/customerReviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch your reviews.');
+        }
+        const data = await response.json();
+        setUserReviews(data);
+      } catch (err) {
+        console.error('Error fetching user reviews:', err);
+        setError('Failed to load your reviews. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserReviews();
+  }, [customerId]);
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Your Ratings and Reviews</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Ratings and Reviews</h2>
+
+        {loading && <p className="text-center text-gray-600">Loading your reviews...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && userReviews.length === 0 && (
+          <p className="text-center text-gray-600">You have not submitted any reviews yet.</p>
+        )}
+
+        {!loading && !error && userReviews.length > 0 && (
+          <div className="space-y-6">
+            {userReviews.map((review) => (
+              <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{review.productName}</h3>
+                <div className="flex items-center mb-2">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${star <= review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-gray-600 text-sm ml-3">Reviewed on: {new Date(review.date).toLocaleDateString()}</span>
+                </div>
+                <p className="text-gray-700">{review.review}</p>
+              </div>
+            ))}
           </div>
         )}
 
