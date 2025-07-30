@@ -1,1 +1,35 @@
 No plan till now.
+
+
+
+
+
+//hafizz here
+
+//user end
+profile should have 5 options
+1. your profile
+2. track your order
+3. your past orders
+4. your ratings and reviews
+5. log out
+
+
+
+//admin end
+1. your profile
+2. update order status
+3. add product
+4. log out
+
+// payment system
+after clicking on proceed to payment
+a window/page will show all the order items, quantity, and price (unit price*quantity=payable)
+it will also add 50 tk delivery charge for all the orders
+
+
+//to do 
+1. make the reviews and ratting work
+2. admin panel
+3. payment system
+4. fix the buttons in the home page

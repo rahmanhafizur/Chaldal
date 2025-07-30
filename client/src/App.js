@@ -1,7 +1,6 @@
 // CHALDAL/client/src/App.js
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings } from 'lucide-react'; // Added new icons
-
+import { ShoppingCart, X as CloseIcon, MessageCircle, Menu, ChevronLeft, ChevronRight, Search as SearchIcon, Heart, Share2, MapPin, Star, User, Package, History, MessageSquare, LogOut, PlusCircle, Settings, Edit, Trash2, CheckCircle } from 'lucide-react'; // Added CheckCircle icon for order status
 
 // import SignupPage from './SignupPage'; // REMOVED: Moving SignupPage inline
 
@@ -9,7 +8,7 @@ const logo = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/asse
 const basket_of_organic_foods = 'https://github.com/rahmanhafizur/Chaldal/blob/main/client/src/assets/Basket_of_foods.png?raw=true'; // Using the provided contentFetchId URL
 
 function App() {
-  // State for managing the current page view ('home' or 'productDetail')
+  // State for managing the current page view ('home' or 'productDetail' or 'profile' or 'modifyProducts' or 'trackOrder' or 'updateOrderStatus')
   const [currentPage, setCurrentPage] = useState('home');
   // State for storing the product data when a product is clicked
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -20,11 +19,14 @@ function App() {
   const [customerId, setCustomerId] = useState('');
   const [username, setUsername] = useState('');
   const [userBool, setUserBool] = useState(false);
-  
+
   const [adminBool, setAdminBool] = useState(false);
   // New state for user role: 'guest', 'customer', 'admin'
-  
+
   const [userRole, setUserRole] = useState('guest'); // Default to guest
+
+  // New state for storing full user profile details
+  const [userProfileData, setUserProfileData] = useState(null);
 
 
   // State for managing the cart
@@ -41,11 +43,14 @@ function App() {
   // Profile Menu State - MOVED INSIDE App FUNCTION
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  // New state for storing unique category objects (id and name)
+  const [allCategories, setAllCategories] = useState([]);
+
 
   // Added by Fahim
   // Merging the cart items after signIn
   // This function now explicitly takes the customerId and the current local cart items
-  const mergeCartItems = async(currentCustomerId) => {
+  const mergeCartItems = async (currentCustomerId) => {
     if (currentCustomerId) { // Ensure we have a customerId to proceed
       console.log('check1: Merging cart items for user:', currentCustomerId);
       try {
@@ -84,7 +89,6 @@ function App() {
 
 
 
-
   // Added by Fahim ... ...
   // MODIFIED: handleLogin function to make an API call to the backend
   const handleLogin = async (username, password) => { // Make this function async
@@ -114,9 +118,10 @@ function App() {
         setUsername(data.user.username); // Using data.user.name as the display name
         setUserBool(true); // Set user as logged in
         setShowLoginModal(false); // Close the login modal
-        setUserRole(data.user.role || 'customer'); // Set user role based on backend response
+        setUserRole(data.user.status || 'customer'); // Set user role based on backend response
 
         mergeCartItems(data.user.id)
+
 
         console.log('The user is a/an ' + data.user.status);
 
@@ -124,6 +129,17 @@ function App() {
         if(data.user.status == 'admin') {
           setAdminBool(true);
         }
+
+        // Update user profile data from login response if available
+        setUserProfileData(data.user);
+
+        console.log(data.user.email + ': Who is the bug????');
+
+        mergeCartItems(data.user.id)
+
+        // IMPORTANT: In a real application, if your backend sends a JWT,
+        // you would store it here (e.g., in localStorage) for future authenticated requests.
+        // Example: localStorage.setItem('authToken', data.token);
 
         // alert('Sign-in successful! Welcome, ' + data.user.name); // Provide user feedback
       } else {
@@ -223,7 +239,7 @@ function App() {
     justifyContent: "center",
     backgroundColor: "#007bff",
     color: "#fff",
-    border: "2px solid #007bff",
+    border: "20px solid #007bff",
   };
 
   // State for managing the categories menu visibility
@@ -239,31 +255,54 @@ function App() {
 
   // ---------- DATABASE INTEGRATION CHANGES START HERE ----------
   // Effect for fetching products from backend
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoadingProducts(true); // Set loading to true before fetching
-        // Ensure this URL matches your backend server's address and port
-        const response = await fetch('http://localhost:5000/api/products');
-        if (!response.ok) {
-          // If the response is not OK, it means there was a server error or network issue
-          throw new Error(`HTTP error! status: ${response.status}. Please ensure your backend server is running and accessible at http://localhost:5000.`);
-        }
-        const data = await response.json();
-        setProducts(data); // Set the fetched products to state
-      } catch (error) {
-        console.error("Could not fetch products:", error);
-        // Provide a more user-friendly error message for common network issues
-        if (error.message.includes("Failed to fetch")) {
-          setProductFetchError("Failed to connect to the backend server. Please ensure your Node.js server is running on http://localhost:5000 and that CORS is configured correctly.");
-        } else {
-          setProductFetchError(error.message); // Store the error message
-        }
-      } finally {
-        setLoadingProducts(false); // Always set loading to false after attempt
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true); // Set loading to true before fetching
+      // Ensure this URL matches your backend server's address and port
+      const response = await fetch('http://localhost:5000/api/products');
+      if (!response.ok) {
+        // If the response is not OK, it means there was a server error or network issue
+        throw new Error(`HTTP error! status: ${response.status}. Please ensure your backend server is running and accessible at http://localhost:5000.`);
       }
-    };
+      const data = await response.json();
+      setProducts(data); // Set the fetched products to state
 
+      // Extract unique categories from fetched products
+      const uniqueCategories = new Map();
+      data.forEach(product => {
+        // Assuming product.category is an object like { id: 1, name: 'Fruits' }
+        // Or if it's a simple ID, handle it
+        if (product.category) {
+          if (typeof product.category === 'object' && product.category.id && product.category.name) {
+            uniqueCategories.set(product.category.id, {
+              id: product.category.id,
+              name: product.category.name
+            });
+          } else if (typeof product.category === 'number' || typeof product.category === 'string') {
+            // If category is just an ID or name, create a simple object for consistency
+            uniqueCategories.set(product.category, {
+              id: product.category,
+              name: `${product.category}` // Fallback name
+            });
+          }
+        }
+      });
+      setAllCategories(Array.from(uniqueCategories.values()));
+
+    } catch (error) {
+      console.error("Could not fetch products:", error);
+      // Provide a more user-friendly error message for common network issues
+      if (error.message.includes("Failed to fetch")) {
+        setProductFetchError("Failed to connect to the backend server. Please ensure your Node.js server is running on http://localhost:5000 and that CORS is configured correctly.");
+      } else {
+        setProductFetchError(error.message); // Store the error message
+      }
+    } finally {
+      setLoadingProducts(false); // Always set loading to false after attempt
+    }
+  };
+
+  useEffect(() => {
     fetchProducts();
   }, []); // Empty dependency array means this runs once on mount
 
@@ -318,11 +357,6 @@ function App() {
     setTimeout(() => setAutoplayPaused(false), 3000); // Resume after 3 seconds
   };
 
-  // Get unique categories from products (now derived from fetched products)
-  // The 'category' property on the product objects from backend will be CATEGORY_ID (a number)
-  // Display "Category ID: {category}" to reflect this.
-  const categories = [...new Set(products.map(product => product.category))];
-
   const handleScrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -338,51 +372,35 @@ function App() {
     }
   };
 
-  // // Cart Functions
-  // const addToCart = (product) => {
-  //   setCartItems((prevItems) => {
-  //     const existingItem = prevItems.find((item) => item.id === product.id);
-  //     if (existingItem) {
-  //       return prevItems.map((item) =>
-  //         item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-  //       );
-  //     } else {
-  //       return [...prevItems, { ...product, quantity: 1 }];
-  //     }
-  //   });
-  // };
-
-
-
-  // Added by Fahim ... ...
-  // cart function connecting to the database
   // Cart Functions
   const addToCart = async (product) => {
-    // Calculate the new state and quantity BEFORE setting the state
-    const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
-    let newCartItems;
-    let newProductQuantity;
-
-    if(userBool && customerId) {
-      if (existingItem) {
-        newCartItems = cartItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-        newProductQuantity = existingItem.quantity + 1; // Calculate based on existing item
-      } else {
-        newCartItems = [...cartItems, { ...product, quantity: 1 }];
-        newProductQuantity = 1; // New item starts with quantity 1
-      }
-
-      // Now, update the local cartItems state
-      setCartItems(newCartItems);
+    if(adminBool) {
+      return;
     }
 
-    // Check if the user is logged in
+    const existingItem = cartItems.find((item) => item.id === product.id);
+    let newProductQuantity;
+
+    if (existingItem) {
+      newProductQuantity = existingItem.quantity + 1;
+    } else {
+      newProductQuantity = 1;
+    }
+
+    // Optimistically update local state
+    setCartItems((prevItems) => {
+      if (existingItem) {
+        return prevItems.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        return [...prevItems, { ...product, quantity: 1 }];
+      }
+    });
+
     if (userBool && customerId) {
       try {
         console.log(`User ${customerId} adding product ${product.id}. New quantity: ${newProductQuantity}`);
-        // Make an API call to update the cart in the backend
         const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
           method: 'POST',
           headers: {
@@ -395,47 +413,38 @@ function App() {
           }),
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          console.log('Backend cart updated successfully:', data.message);
-        } else {
-          console.error('Failed to update backend cart:', data.message || 'Unknown error');
-          // If backend update fails, revert the local state for consistency
-          setCartItems(cartItems); // Revert to the state before this addition
-          // Using a custom alert/modal instead of window.alert
-          // alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Failed to update backend cart:', errorData.message || 'Unknown error');
+          // Revert local state if backend update fails
+          setCartItems(prevItems => prevItems.map(item =>
+            item.id === product.id ? { ...item, quantity: existingItem ? existingItem.quantity : 0 } : item
+          ).filter(item => item.quantity > 0));
         }
       } catch (error) {
         console.error('Network error updating cart in backend:', error);
-        // If network error, revert the local state for consistency
-        setCartItems(cartItems); // Revert to the state before this addition
-        // Using a custom alert/modal instead of window.alert
-        // alert('Network error updating cart. Please try again.');
+        // Revert local state if network error
+        setCartItems(prevItems => prevItems.map(item =>
+          item.id === product.id ? { ...item, quantity: existingItem ? existingItem.quantity : 0 } : item
+        ).filter(item => item.quantity > 0));
       }
     } else {
       console.log('User not logged in. Cart updated locally only.');
-      // Using a custom alert/modal instead of window.alert
-      // alert('Please Sign In');
     }
   };
 
 
-  // const removeFromCart = async (productId) => {
-  //   setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
-  // };
+  const removeFromCart = async (product) => {
+    if(adminBool) {
+      return;
+    }
 
-   const removeFromCart = async (product) => {
+    // Optimistically update local state
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== product.id));
 
-    const existingItem = cartItems.find((item) => item.id === product.id); // Use current cartItems state directly
-    let newProductQuantity = 0;
-
-    // Check if the user is logged in
     if (userBool && customerId) {
       try {
-        console.log(`User ${customerId} removing product ${product.id}. New quantity: ${newProductQuantity}`);
-        // Make an API call to update the cart in the backend
+        console.log(`User ${customerId} removing product ${product.id}. Setting quantity to 0.`);
         const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
           method: 'POST',
           headers: {
@@ -444,81 +453,74 @@ function App() {
           body: JSON.stringify({
             customerId: customerId,
             productId: product.id,
-            quantity: newProductQuantity,
+            quantity: 0, // Set quantity to 0 to remove from backend cart
           }),
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          console.log('Backend cart updated successfully:', data.message);
-        } else {
-          console.error('Failed to update backend cart:', data.message || 'Unknown error');
-          // If backend update fails, revert the local state for consistency
-          setCartItems(cartItems); // Revert to the state before this addition
-          // Using a custom alert/modal instead of window.alert
-          // alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Failed to remove item from backend cart:', errorData.message || 'Unknown error');
+          // Revert local state if backend update fails (add the item back)
+          setCartItems(prevItems => [...prevItems, product]);
         }
       } catch (error) {
-            console.error('Network error updating cart in backend:', error);
-            // If network error, revert the local state for consistency
-            setCartItems(cartItems); // Revert to the state before this addition
-            // Using a custom alert/modal instead of window.alert
-            // alert('Network error updating cart. Please try again.');
+        console.error('Network error removing item from cart in backend:', error);
+        // Revert local state if network error (add the item back)
+        setCartItems(prevItems => [...prevItems, product]);
       }
     } else {
       console.log('User not logged in. Cart updated locally only.');
     }
-
   };
 
-  // Modified updateCartQuantity to accept an optional customerId
   const updateCartQuantity = async (productId, newProductQuantity) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.max(1, newProductQuantity) } : item
-      )
-    );
+    if(adminBool) {
+      return;
+    }
 
-    // The userBool and customerId here will be from the latest render cycle
-    // which should be updated after a successful login and subsequent re-render.
-    console.log(`userBool: ${userBool}, customerId: ${customerId}, username: ${username} in updateCartQuantity`);
-    
-    // Only proceed with backend update if a customerId is available
-    if (customerId) {
+    const existingItem = cartItems.find((item) => item.id === productId);
+    const quantityToUpdate = Math.max(0, newProductQuantity); // Ensure quantity is not negative
+
+    // Optimistically update local state
+    setCartItems((prevItems) => {
+      if (quantityToUpdate === 0) {
+        return prevItems.filter((item) => item.id !== productId);
+      } else {
+        return prevItems.map((item) =>
+          item.id === productId ? { ...item, quantity: quantityToUpdate } : item
+        );
+      }
+    });
+
+    if (userBool && customerId) {
       try {
-        console.log(`User ${customerId} updating product ${productId}. New quantity: ${newProductQuantity}`);
-        newProductQuantity = Math.max(1, newProductQuantity);
-        // Make an API call to update the cart in the backend
+        console.log(`User ${customerId} updating product ${productId}. New quantity: ${quantityToUpdate}`);
         const response = await fetch('http://localhost:5000/api/cartUpdate/update', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            customerId: customerId, // Use the determined customerId
+            customerId: customerId,
             productId: productId,
-            quantity: newProductQuantity,
+            quantity: quantityToUpdate,
           }),
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          console.log('Backend cart updated successfully:', data.message);
-        } else {
-          console.error('Failed to update backend cart:', data.message || 'Unknown error');
-          // If backend update fails, revert the local state for consistency
-          setCartItems(cartItems); // Revert to the state before this addition
-          // Using a custom alert/modal instead of window.alert
-          // alert('Failed to update cart in backend: ' + (data.message || 'Please try again.'));
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Failed to update backend cart quantity:', errorData.message || 'Unknown error');
+          // Revert local state if backend update fails
+          setCartItems(prevItems => prevItems.map(item =>
+            item.id === productId ? { ...item, quantity: existingItem ? existingItem.quantity : 0 } : item
+          ).filter(item => item.quantity > 0));
         }
       } catch (error) {
-        console.error('Network error updating cart in backend:', error);
-        // If network error, revert the local state for consistency
-        setCartItems(cartItems); // Revert to the state before this addition
-        // Using a custom alert/modal instead of window.alert
-        // alert('Network error updating cart. Please try again.');
+        console.error('Network error updating cart quantity in backend:', error);
+        // Revert local state if network error
+        setCartItems(prevItems => prevItems.map(item =>
+          item.id === productId ? { ...item, quantity: existingItem ? existingItem.quantity : 0 } : item
+        ).filter(item => item.quantity > 0));
       }
     } else {
       console.log('User not logged in. Cart updated locally only.');
@@ -542,11 +544,10 @@ function App() {
 
   // Filtered products based on search term and selected category
   const filteredProducts = products.filter(product => {
-    // These property names (product.name, product.description, product.category)
-    // now correctly correspond to the data structure returned by your Node.js backend
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = selectedCategory ? product.category === selectedCategory : true; // Compares category ID (number)
+    // Correctly access category ID for filtering
+    const matchesCategory = selectedCategory ? (product.category && product.category.id === selectedCategory) : true;
     return matchesSearch && matchesCategory;
   });
 
@@ -820,11 +821,8 @@ function App() {
 
   return (
     <>
-      // Added by Fahim ... ...
-      // to show the signup page
-      // the SignupPage is kept in another file named SignupPage
       {/* show signup page */}
-      {showSignupModal && ( // <--- ADD THIS CONDITIONAL RENDERING BLOCK
+      {showSignupModal && (
         <>
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999]">
             <div className="modal-overlay" style={{
@@ -860,7 +858,7 @@ function App() {
                 {/* Render the SignupPage component here */}
                 <SignupPage
                   onClose={() => setShowSignupModal(false)}
-                  onSignInClick={handleSignInFromSignup} // <--- NEW PROP PASSED HERE
+                  onSignInClick={handleSignInFromSignup}
                 />
               </div>
             </div>
@@ -966,14 +964,13 @@ function App() {
                       All Products
                     </button>
                     {/* Maps category IDs from products */}
-                    {categories.map((category) => (
+                    {allCategories.map((cat) => (
                       <button
-                        key={category}
-                        onClick={() => { setSelectedCategory(category); setShowCategoriesMenu(false); }}
+                        key={cat.id} // Use cat.id for the key
+                        onClick={() => { setSelectedCategory(cat.id); setShowCategoriesMenu(false); }} // Set selectedCategory to the ID
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                       >
-                        {/* Display category ID for now, as backend sends IDs */}
-                        {category}
+                        {cat.name} {/* Render cat.name */}
                       </button>
                     ))}
                   </div>
@@ -1092,6 +1089,18 @@ function App() {
                             setUserRole('guest'); // Reset role on logout
                             setShowProfileMenu(false);
                           }}
+                          onViewProfile={() => { // Pass onViewProfile to AdminProfileModal
+                            setShowProfileMenu(false);
+                            setCurrentPage('profile');
+                          }}
+                          onViewModifyProducts={() => { // New prop for Modify Products
+                            setShowProfileMenu(false);
+                            setCurrentPage('modifyProducts');
+                          }}
+                          onUpdateOrderStatus={() => { // New prop for Update Order Status
+                            setShowProfileMenu(false);
+                            setCurrentPage('updateOrderStatus');
+                          }}
                         />
                       ) : (
                         <UserProfileModal
@@ -1108,6 +1117,13 @@ function App() {
                             setShowProfileMenu(false);
                             setCurrentPage('profile');
                           }}
+                          onTrackOrder={() => { // New prop for Track Order
+                            setShowProfileMenu(false);
+                            setCurrentPage('trackOrder');
+                          }}
+                          // Pass userProfileData and setUserProfileData to UserProfileModal
+                          userProfileData={userProfileData}
+                          setUserProfileData={setUserProfileData}
                         />
                       )
                     )}
@@ -1217,7 +1233,9 @@ function App() {
               {/* Display current category if selected */}
               {/* Only show if products are not loading and no error */}
               {!loadingProducts && !productFetchError && selectedCategory && (
-                <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">{selectedCategory}</h2>
+                <h2 className="text-3xl font-bold text-gray-800 col-span-full text-left mb-6">
+                  {allCategories.find(cat => cat.id === selectedCategory)?.name || ` ${selectedCategory}`}
+                </h2>
               )}
 
               {/* Display message if no products found */}
@@ -1263,11 +1281,29 @@ function App() {
           <UserProfilePage
             customerId={customerId}
             username={username}
+            userProfileData={userProfileData}
+            setUserProfileData={setUserProfileData}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'modifyProducts' && adminBool ? (
+          <ModifyProductsPage
+            products={products}
+            fetchProducts={fetchProducts} // Pass fetchProducts to allow refresh
+            allCategories={allCategories} // Pass allCategories to ModifyProductsPage
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'trackOrder' && userBool ? (
+          <TrackOrderPage
+            customerId={customerId}
+            onBackClick={() => setCurrentPage('home')}
+          />
+        ) : currentPage === 'updateOrderStatus' && adminBool ? (
+          <UpdateOrderStatusPage
             onBackClick={() => setCurrentPage('home')}
           />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 pt-28">
-            <p className="text-xl text-gray-700">Please sign in to view your profile.</p>
+            <p className="text-xl text-gray-700">Access Denied. Please sign in with appropriate permissions.</p>
             <button
               onClick={() => setCurrentPage('home')}
               className="mt-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
@@ -1458,7 +1494,7 @@ function App() {
 
         {/* Footer */}
         <footer id="footer-section" className="bg-gray-800 text-white mt-0"> {/* Added id for scrolling */}
-        {/* <footer className="bg-gray-800 text-white mt-16"> */}
+          {/* <footer className="bg-gray-800 text-white mt-16"> */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
             {/* Contact Section */}
             <div>
@@ -1528,7 +1564,7 @@ function App() {
                 </a>
                 <a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center hover:bg-blue-600 transition-colors">
                   <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M12 0C8.74 0 8.332.014 7.027.072 5.722.13 4.708.318 3.79.673 2.872 1.029 2.062 1.579 1.414 2.227S.443 3.872.088 4.79C.03 6.102.016 6.51 0 7.025v9.95c.016.515.03 1.023.088 1.935.355.918.905 1.728 1.553 2.376s1.458 1.198 2.376 1.553c.912.058 1.42.072 2.732.072h9.95c1.312 0 1.72-.014 3.032-.072.918-.355 1.728-.905 2.376-1.553s1.198-1.458 1.553-2.376c.058-1.312.072-1.72.072-3.032V7.025c0-1.312-.014-1.72-.072-3.032-.355-.918-.905-1.728-1.553-2.376S19.102.443 18.184.088C16.872.03 16.464.016 15.95 0h-3.95zM12 1.83c1.298 0 1.63.004 2.628.051.854.04 1.405.21 1.75.35.49.208.79.467 1.09.764.3.298.557.6.764 1.09.14.346.31.897.35 1.75.047.998.05 1.33.05 2.628s-.004 1.63-.051 2.628c-.04.854-.21 1.405-.35 1.75-.208.49-.467.79-.764 1.09-.298.3-.6.557-1.09.764-.14-.346-.31-.897-.35-1.75-.047-.998-.05-1.33-.05-2.628s.004-1.63.051-2.628c-.04-.854.21-1.405.35-1.75.208.49.467.79.764 1.09.298.3.6.557 1.09.764.346.14.897.31 1.75.35.998-.047 1.33-.05 2.628-.05zM12 5.565c-3.55 0-6.435 2.885-6.435 6.435S8.45 18.435 12 18.435 18.435 15.55 18.435 12 15.55 5.565 12 5.565zm0 10.575c-2.28 0-4.135-1.855-4.135-4.135S9.72 7.865 12 7.865s4.135 1.855 4.135 4.135-1.855 4.135-4.135 4.135zm5.772-9.75c-.567 0-1.025.458-1.025 1.025s.458 1.025 1.025 1.025 1.025-.458 1.025-1.025-.458-1.025-1.025-1.025z" clipRule="evenodd" />
                   </svg>
                 </a>
               </div>
@@ -1648,11 +1684,13 @@ export default App;
 
 
 //*UserProfileModal* by hafiz
-const UserProfileModal = ({ onClose, onLogout, onViewProfile }) => {
+const UserProfileModal = ({ onClose, onLogout, onViewProfile, onTrackOrder, userProfileData, setUserProfileData }) => {
   const handleOptionClick = (option) => {
     console.log(`User clicked: ${option}`);
     if (option === 'Your Profile') {
       onViewProfile();
+    } else if (option === 'Track Your Order') {
+      onTrackOrder();
     }
     onClose(); // Close modal after clicking an option
   };
@@ -1700,10 +1738,16 @@ const UserProfileModal = ({ onClose, onLogout, onViewProfile }) => {
 };
 
 //*AdminProfileModal* by hafiz
-const AdminProfileModal = ({ onClose, onLogout }) => {
+const AdminProfileModal = ({ onClose, onLogout, onViewProfile, onViewModifyProducts, onUpdateOrderStatus }) => { // Added onUpdateOrderStatus prop
   const handleOptionClick = (option) => {
     console.log(`Admin clicked: ${option}`);
-    // Implement navigation or specific actions for admin
+    if (option === 'Your Profile') { // Check for the specific option
+      onViewProfile(); // Call onViewProfile when "Your Profile" is clicked
+    } else if (option === 'Modify Products') {
+      onViewModifyProducts();
+    } else if (option === 'Update Order Status') {
+      onUpdateOrderStatus();
+    }
     onClose(); // Close modal after clicking an option
   };
 
@@ -1711,7 +1755,7 @@ const AdminProfileModal = ({ onClose, onLogout }) => {
     <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 border border-gray-200 z-50">
       <h3 className="px-4 py-2 text-sm font-bold text-gray-800 border-b border-gray-200">Admin Panel</h3>
       <button
-        onClick={() => handleOptionClick('Your Profile (Admin)')}
+        onClick={() => handleOptionClick('Your Profile')}
         className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
       >
         <User className="w-4 h-4" />
@@ -1725,11 +1769,11 @@ const AdminProfileModal = ({ onClose, onLogout }) => {
         <span>Update Order Status</span>
       </button>
       <button
-        onClick={() => handleOptionClick('Add Product')}
+        onClick={() => handleOptionClick('Modify Products')}
         className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
       >
-        <PlusCircle className="w-4 h-4" />
-        <span>Add Product</span>
+        <PlusCircle className="w-4 h-4" /> {/* Keeping PlusCircle for now, can change if needed */}
+        <span>Modify Products</span>
       </button>
       <button
         onClick={onLogout}
@@ -1911,7 +1955,7 @@ const SignupPage = ({ onClose, onSignInClick }) => {
             placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
@@ -1934,7 +1978,110 @@ const SignupPage = ({ onClose, onSignInClick }) => {
 };
 
 // New UserProfilePage Component
-const UserProfilePage = ({ customerId, username, onBackClick }) => {
+const UserProfilePage = ({ customerId, username, userProfileData, setUserProfileData, onBackClick }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: userProfileData.name,
+    phone: userProfileData.phone,
+    email: userProfileData.email,
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
+  const [profileMessage, setProfileMessage] = useState({ type: '', text: '' }); // 'success' or 'error'
+
+  // Effect to update editForm when userProfileData changes (e.g., after login or successful update)
+  useEffect(() => {
+    setEditForm(prevForm => ({
+      ...prevForm,
+      name: userProfileData.name,
+      phone: userProfileData.phone,
+      email: userProfileData.email,
+    }));
+  }, [userProfileData]);
+
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setProfileMessage({ type: '', text: '' });
+
+    // Validate passwords if they are being changed
+    if (editForm.newPassword || editForm.currentPassword) {
+      if (!editForm.currentPassword) {
+        setProfileMessage({ type: 'error', text: 'Current password is required to change password.' });
+        return;
+      }
+      if (editForm.newPassword !== editForm.confirmNewPassword) {
+        setProfileMessage({ type: 'error', text: 'New passwords do not match.' });
+        return;
+      }
+      if (editForm.newPassword.length < 6) { // Example password policy
+        setProfileMessage({ type: 'error', text: 'New password must be at least 6 characters long.' });
+        return;
+      }
+    }
+
+    try {
+      // Update basic profile info
+      const profileUpdateResponse = await fetch('http://localhost:5000/api/user/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: customerId,
+          name: editForm.name,
+          phone: editForm.phone,
+          email: editForm.email,
+        }),
+      });
+
+      const profileUpdateData = await profileUpdateResponse.json();
+
+      if (!profileUpdateResponse.ok) {
+        throw new Error(profileUpdateData.message || 'Failed to update profile.');
+      }
+
+      // If password fields are filled, attempt to change password
+      if (editForm.currentPassword && editForm.newPassword) {
+        const passwordChangeResponse = await fetch('http://localhost:5000/api/user/password/change', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: customerId,
+            currentPassword: editForm.currentPassword,
+            newPassword: editForm.newPassword,
+          }),
+        });
+
+        const passwordChangeData = await passwordChangeResponse.json();
+
+        if (!passwordChangeResponse.ok) {
+          throw new Error(passwordChangeData.message || 'Failed to change password.');
+        }
+      }
+
+      // Update local state with new profile data
+      setUserProfileData({
+        name: editForm.name,
+        phone: editForm.phone,
+        email: editForm.email,
+      });
+
+      setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setIsEditing(false); // Exit edit mode
+      // Clear password fields after successful update
+      setEditForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmNewPassword: '' }));
+
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setProfileMessage({ type: 'error', text: error.message || 'An error occurred while saving profile.' });
+    }
+  };
+
   return (
     <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
       <nav className="text-xs text-gray-500 mb-6">
@@ -1943,22 +2090,778 @@ const UserProfilePage = ({ customerId, username, onBackClick }) => {
 
       <div className="bg-white p-8 rounded-xl shadow-lg">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Profile</h2>
-        {customerId ? (
-          <div className="space-y-4">
-            <p className="text-lg">
-              <span className="font-semibold">Username:</span> {username}
-            </p>
-            <p className="text-lg">
-              <span className="font-semibold">Customer ID:</span> {customerId}
-            </p>
-            {/* Add more profile details here if available, e.g., email, address, phone */}
-            <p className="text-gray-600 mt-4">
-              This is a basic profile page. More details and editing options can be added here.
-            </p>
+
+        {profileMessage.text && (
+          <div className={`p-3 mb-4 rounded-md text-sm ${profileMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+            {profileMessage.text}
           </div>
+        )}
+
+        {customerId ? (
+          <>
+            {!isEditing ? (
+              <div className="space-y-4">
+                <p className="text-lg">
+                  <span className="font-semibold">Username:</span> {username}
+                </p>
+                <p className="text-lg">
+                  <span className="font-semibold">Customer Name:</span> {userProfileData.name}
+                </p>
+                <p className="text-lg">
+                  <span className="font-semibold">Phone:</span> {userProfileData.phone}
+                </p>
+                <p className="text-lg">
+                  <span className="font-semibold">Email:</span> {userProfileData.email}
+                </p>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="mt-4 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2"
+                >
+                  <Edit className="w-5 h-5" />
+                  <span>Edit Profile</span>
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSaveProfile} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Customer Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={editForm.name}
+                    onChange={handleEditChange}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    value={editForm.phone}
+                    onChange={handleEditChange}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={editForm.email}
+                    onChange={handleEditChange}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-lg font-bold text-gray-800 mb-3">Change Password</h3>
+                  <div>
+                    <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>
+                    <input
+                      type="password"
+                      id="currentPassword"
+                      name="currentPassword"
+                      value={editForm.currentPassword}
+                      onChange={handleEditChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
+                    <input
+                      type="password"
+                      id="newPassword"
+                      name="newPassword"
+                      value={editForm.newPassword}
+                      onChange={handleEditChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                    <input
+                      type="password"
+                      id="confirmNewPassword"
+                      name="confirmNewPassword"
+                      value={editForm.confirmNewPassword}
+                      onChange={handleEditChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditForm({ // Reset form to current profile data
+                        name: userProfileData.name,
+                        phone: userProfileData.phone,
+                        email: userProfileData.email,
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmNewPassword: '',
+                      });
+                      setProfileMessage({ type: '', text: '' }); // Clear messages
+                    }}
+                    className="px-6 py-2 rounded-full bg-gray-300 text-gray-800 font-semibold shadow-lg hover:bg-gray-400 transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 rounded-full bg-green-600 text-white font-semibold shadow-lg hover:bg-green-700 transition-all duration-300"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
         ) : (
           <p className="text-lg text-red-500">Please sign in to view your profile details.</p>
         )}
+        {!isEditing && (
+          <button
+            onClick={onBackClick}
+            className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+          >
+            Back to Home
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// New ModifyProductsPage Component for Admin
+const ModifyProductsPage = ({ products, fetchProducts, onBackClick, allCategories }) => {
+  const [showProductFormModal, setShowProductFormModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null); // Product being edited
+
+  const handleAddProductClick = () => {
+    setEditingProduct(null); // Clear any product being edited
+    setShowProductFormModal(true);
+  };
+
+  const handleEditProductClick = (product) => {
+    setEditingProduct(product);
+    setShowProductFormModal(true);
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/products/delete/${productId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          console.log(`Product ${productId} deleted successfully.`);
+          fetchProducts(); // Refresh the product list
+        } else {
+          const errorData = await response.json();
+          console.error('Failed to delete product:', errorData.message || 'Unknown error');
+          // Using a custom alert/modal instead of window.alert
+          alert('Failed to delete product: ' + (errorData.message || 'Please try again.'));
+        }
+      } catch (error) {
+        console.error('Network error deleting product:', error);
+        // Using a custom alert/modal instead of window.alert
+        alert('Network error deleting product. Please try again later.');
+      }
+    }
+  };
+
+  const handleSaveProduct = async (productData) => {
+    try {
+      let response;
+      if (productData.id) { // If productData has an ID, it's an update
+        response = await fetch(`http://localhost:5000/api/products/update/${productData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData),
+        });
+      } else { // Otherwise, it's a new product
+        response = await fetch('http://localhost:5000/api/products/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData),
+        });
+      }
+
+      if (response.ok) {
+        console.log('Product saved successfully!');
+        setShowProductFormModal(false);
+        fetchProducts(); // Refresh the product list
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to save product:', errorData.message || 'Unknown error');
+        // Using a custom alert/modal instead of window.alert
+        alert('Failed to save product: ' + (errorData.message || 'Please try again.'));
+      }
+    } catch (error) {
+      console.error('Network error saving product:', error);
+      // Using a custom alert/modal instead of window.alert
+      alert('Network error saving product. Please try again later.');
+    }
+  };
+
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Modify Products</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Manage Products</h2>
+
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={handleAddProductClick}
+            className="px-8 py-4 rounded-full bg-green-600 text-white font-semibold text-lg shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center space-x-2"
+          >
+            <PlusCircle className="w-6 h-6" />
+            <span>Add New Product</span>
+          </button>
+        </div>
+
+        {products.length === 0 ? (
+          <p className="text-center text-gray-600">No products available to manage.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+            {products.map((product) => (
+              <div key={product.id} className="bg-gray-50 p-4 rounded-xl shadow-md w-full max-w-xs">
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="rounded-lg mb-3 w-full h-32 object-cover"
+                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/150x100/cccccc/333333?text=Image+Error'; }}
+                />
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
+                <p className="text-gray-600 text-sm mb-2">৳{product.price.toFixed(2)}</p>
+                {/* Removed stock display as per new requirements */}
+                {/* <p className="text-gray-600 text-sm mb-3">Stock: {product.stock || 'N/A'}</p> */}
+
+                <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => handleEditProductClick(product)}
+                    className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+
+      {showProductFormModal && (
+        <ProductFormModal
+          onClose={() => setShowProductFormModal(false)}
+          onSave={handleSaveProduct}
+          productToEdit={editingProduct}
+          allCategories={allCategories} // Pass allCategories to ProductFormModal
+        />
+      )}
+    </div>
+  );
+};
+
+
+// New ProductFormModal Component (for adding and editing products)
+const ProductFormModal = ({ onClose, onSave, productToEdit, allCategories }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    imageUrl: '',
+    category: '', // Assuming category is a string name
+    brand: '', // New field for brand
+  });
+  const [formMessage, setFormMessage] = useState({ type: '', text: '' });
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  useEffect(() => {
+    if (productToEdit) {
+      setFormData({
+        name: productToEdit.name || '',
+        description: productToEdit.description || '',
+        price: productToEdit.price || '',
+        imageUrl: productToEdit.imageUrl || '',
+        category: productToEdit.category?.name || productToEdit.category || '', // Handle category object or string
+        brand: productToEdit.brand || '', // Initialize brand
+      });
+    } else {
+      // Reset form if no product to edit (for "Add New Product")
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        imageUrl: '',
+        category: '',
+        brand: '',
+      });
+    }
+  }, [productToEdit]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'category') {
+      const filtered = allCategories.filter(cat =>
+        cat.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+      setShowCategoryDropdown(true);
+    }
+  };
+
+  const handleCategorySelect = (categoryName) => {
+    setFormData(prev => ({ ...prev, category: categoryName }));
+    setShowCategoryDropdown(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormMessage({ type: '', text: '' });
+
+    // Basic validation
+    if (!formData.name || !formData.price || !formData.imageUrl || !formData.category || !formData.brand) {
+      setFormMessage({ type: 'error', text: 'Please fill in all required fields (Name, Price, Image URL, Category, Brand).' });
+      return;
+    }
+    if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
+      setFormMessage({ type: 'error', text: 'Price must be a positive number.' });
+      return;
+    }
+
+    const productData = {
+      ...formData,
+      price: parseFloat(formData.price),
+      // category is sent as an object with name, backend needs to handle mapping to ID
+      category: { name: formData.category },
+      // Remove stock, sku, tags from the payload
+      stock: 0, // Default or handle as per backend logic if stock is not managed here
+      sku: '',
+      tags: [],
+    };
+
+    if (productToEdit) {
+      productData.id = productToEdit.id; // Add ID for update operation
+    }
+
+    onSave(productData); // Call the onSave prop passed from ModifyProductsPage
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-[1001] p-4">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg relative animate-fade-in-up">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 transition"
+          aria-label="Close product form"
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          {productToEdit ? 'Edit Product' : 'Add New Product'}
+        </h2>
+
+        {formMessage.text && (
+          <div className={`p-3 mb-4 rounded-md text-sm ${formMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+            {formMessage.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Product Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="3"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            ></textarea>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price (৳)</label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                step="0.01"
+                min="0.01"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image URL</label>
+            <input
+              type="url"
+              id="imageUrl"
+              name="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          </div>
+
+          <div className="relative">
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
+            <input
+              type="text"
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              onFocus={() => {
+                setFilteredCategories(allCategories); // Show all categories on focus
+                setShowCategoryDropdown(true);
+              }}
+              onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 100)} // Hide after a short delay
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+            {showCategoryDropdown && filteredCategories.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto mt-1">
+                {filteredCategories.map((cat) => (
+                  <li
+                    key={cat.id}
+                    onMouseDown={() => handleCategorySelect(cat.name)} // Use onMouseDown to prevent blur event from firing before click
+                    className="p-2 cursor-pointer hover:bg-gray-100 text-gray-800"
+                  >
+                    {cat.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <label htmlFor="brand" className="block text-sm font-medium text-gray-700">Brand</label>
+            <input
+              type="text"
+              id="brand"
+              name="brand"
+              value={formData.brand}
+              onChange={handleChange}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 rounded-full bg-gray-300 text-gray-800 font-semibold shadow-lg hover:bg-gray-400 transition-all duration-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+            >
+              {productToEdit ? 'Save Changes' : 'Add Product'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// New TrackOrderPage Component for Users
+const TrackOrderPage = ({ customerId, onBackClick }) => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!customerId) {
+        setError("Please sign in to track your orders.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/orders/customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders.');
+        }
+        const data = await response.json();
+        setOrders(data);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError('Failed to load your orders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [customerId]);
+
+  const orderStatuses = [
+    { status: 'Order Placed', description: 'Your order is successfully placed.', completed: true },
+    { status: 'Processing', description: 'We have received your order, our team will process it shortly.', completed: false },
+    { status: 'Confirmed', description: 'We have confirmed your order.', completed: false },
+    { status: 'Packing', description: 'We are currently packing your order.', completed: false },
+    { status: 'Packed', description: 'Your order is packed now.', completed: false },
+    { status: 'Delivering', description: 'Our delivery partner has picked up your order for delivering.', completed: false },
+    { status: 'Delivered', description: 'You have received your order.', completed: false },
+  ];
+
+  const getStatusIndex = (status) => orderStatuses.findIndex(s => s.status === status);
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Track Your Order</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Track Your Order</h2>
+
+        {loading && <p className="text-center text-gray-600">Loading orders...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && orders.length === 0 && (
+          <p className="text-center text-gray-600">You have no active orders to track.</p>
+        )}
+
+        {!loading && !error && orders.length > 0 && (
+          <div className="space-y-6">
+            {orders.map((order) => (
+              <div key={order.orderId} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-800">Order ID: #{order.orderId}</h3>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    order.deliveryStatus === 'Delivered' ? 'bg-green-100 text-green-800' :
+                    order.deliveryStatus === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {order.deliveryStatus}
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-2">Total: ৳{parseFloat(order.totalAmount).toFixed(2)}</p>
+                <p className="text-gray-600 mb-4">Ordered On: {new Date(order.orderDate).toLocaleDateString()} {new Date(order.orderDate).toLocaleTimeString()}</p>
+
+                {/* Timeline */}
+                <div className="relative pl-6">
+                  <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-300"></div> {/* Vertical line */}
+                  {orderStatuses.map((statusStep, index) => {
+                    const isCompleted = getStatusIndex(order.deliveryStatus) >= index;
+                    return (
+                      <div key={index} className="mb-4 flex items-start">
+                        <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                          isCompleted ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}>
+                          {isCompleted ? <CheckCircle className="w-4 h-4" /> : <div className="w-2 h-2 rounded-full bg-gray-500"></div>}
+                        </div>
+                        <div className="ml-6">
+                          <p className={`font-semibold ${isCompleted ? 'text-gray-800' : 'text-gray-500'}`}>
+                            {statusStep.status}
+                          </p>
+                          <p className="text-sm text-gray-600">{statusStep.description}</p>
+                          {statusStep.status === 'Delivering' && isCompleted && (
+                            <a href="#" className="text-blue-600 hover:underline text-sm mt-1 block">Track Order</a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onBackClick}
+          className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          Back to Home
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// New UpdateOrderStatusPage Component for Admin
+const UpdateOrderStatusPage = ({ onBackClick }) => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [updateMessage, setUpdateMessage] = useState({ type: '', text: '' });
+
+  const fetchAllOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/orders/all'); // Assuming an endpoint to get all orders
+      if (!response.ok) {
+        throw new Error('Failed to fetch all orders.');
+      }
+      const data = await response.json();
+      setOrders(data);
+    } catch (err) {
+      console.error('Error fetching all orders:', err);
+      setError('Failed to load orders. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllOrders();
+  }, []);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/orders/updateStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status.');
+      }
+
+      setUpdateMessage({ type: 'success', text: `Order ${orderId} status updated to ${newStatus}.` });
+      fetchAllOrders(); // Refresh the list of orders
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      setUpdateMessage({ type: 'error', text: `Failed to update status for order ${orderId}.` });
+    }
+  };
+
+  const orderStatusOptions = [
+    'Pending',
+    'Processing',
+    'Confirmed',
+    'Packing',
+    'Packed',
+    'Delivering',
+    'Delivered',
+    'Cancelled'
+  ];
+
+  return (
+    <div className="pt-28 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-gray-800 min-h-screen">
+      <nav className="text-xs text-gray-500 mb-6">
+        <button onClick={onBackClick} className="hover:underline">Home</button> &gt; <span className="font-semibold">Update Order Status</span>
+      </nav>
+
+      <div className="bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Update Order Status</h2>
+
+        {updateMessage.text && (
+          <div className={`p-3 mb-4 rounded-md text-sm ${updateMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+            {updateMessage.text}
+          </div>
+        )}
+
+        {loading && <p className="text-center text-gray-600">Loading orders...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!loading && !error && orders.length === 0 && (
+          <p className="text-center text-gray-600">No orders found.</p>
+        )}
+
+        {!loading && !error && orders.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+              <thead>
+                <tr className="bg-gray-100 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="py-3 px-4 border-b">Order ID</th>
+                  <th className="py-3 px-4 border-b">Customer ID</th>
+                  <th className="py-3 px-4 border-b">Total Amount</th>
+                  <th className="py-3 px-4 border-b">Order Date</th>
+                  <th className="py-3 px-4 border-b">Current Status</th>
+                  <th className="py-3 px-4 border-b">Update Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.orderId} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="py-3 px-4 text-sm text-gray-800">{order.orderId}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{order.customerId}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">৳{parseFloat(order.totalAmount).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800">{order.deliveryStatus}</td>
+                    <td className="py-3 px-4 text-sm">
+                      <select
+                        value={order.deliveryStatus}
+                        onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
+                        className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {orderStatusOptions.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <button
           onClick={onBackClick}
           className="mt-8 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 transition-all duration-300"
